@@ -4,6 +4,11 @@ Sistema web de monitoramento de frequência escolar e identificação de risco d
 
 O EduAlerta tem como objetivo auxiliar instituições de ensino no acompanhamento da frequência dos alunos, permitindo identificar situações de risco e registrar intervenções para prevenir a evasão escolar.
 
+## Outros colaboradores do projeto:
+<p align="left">
+  <img src="assets/foto-equipe.png" alt="EduAlerta" width="800">
+</p>
+
 ## Funcionalidades
 
 - Cadastro de alunos e turmas.
