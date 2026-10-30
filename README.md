@@ -125,7 +125,9 @@ A modelagem considera as seguintes entidades principais:
 - `ENCAMINHAMENTO`
 
 
-``
+
+
+```mermaid
 erDiagram
     PERIODO_LETIVO {
         bigint id PK
@@ -245,7 +247,7 @@ erDiagram
     }
 
     ENCAMINHAMENTO {
-    bigint id PK
+        bigint id PK
         bigint alerta_id FK
         string servico_destino
         string programa
@@ -256,23 +258,32 @@ erDiagram
 
     ALUNO ||--o{ MATRICULA : possui
     TURMA ||--o{ MATRICULA : recebe
+
     PERIODO_LETIVO ||--o{ FECHAMENTO_SEMANAL : organiza
     TURMA ||--o{ FECHAMENTO_SEMANAL : possui
     USUARIO ||--o{ FECHAMENTO_SEMANAL : registra
+
     FECHAMENTO_SEMANAL ||--|{ FECHAMENTO_DIA : detalha
     FECHAMENTO_SEMANAL ||--o{ FREQUENCIA_SEMANAL : contem
     MATRICULA ||--o{ FREQUENCIA_SEMANAL : recebe
+
     ALUNO ||--o{ ALUNO_RESPONSAVEL : possui
     RESPONSAVEL ||--o{ ALUNO_RESPONSAVEL : associado
+
     ALUNO ||--o{ ALERTA : recebe
     PERIODO_LETIVO ||--o{ ALERTA : referencia
+
     ALERTA ||--o{ ACOMPANHAMENTO : possui
     USUARIO ||--o{ ACOMPANHAMENTO : registra
+
     ALERTA ||--o{ NOTIFICACAO : gera
     RESPONSAVEL ||--o{ NOTIFICACAO : recebe
+
     ALERTA ||--o{ ENCAMINHAMENTO : pode_gerar
+```
+
+
     
-    ````
 
 A frequência é registrada semanalmente, sem a necessidade de cadastrar cada aula individualmente.
 
