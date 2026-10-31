@@ -347,3 +347,4 @@ Funcionalidades como notificações automáticas e integração com WhatsApp nã
 O EduAlerta é um projeto acadêmico desenvolvido no contexto da área de Análise e Desenvolvimento de Sistemas, com foco na aplicação de conceitos de desenvolvimento web, engenharia de software, banco de dados e prevenção da evasão escolar.
 
 **Desenvolvimento:** Em andamento.
+
