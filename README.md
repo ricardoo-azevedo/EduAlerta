@@ -1,36 +1,131 @@
-# EduAlerta
+# 🎓 EduAlerta
 
-Sistema web de monitoramento de frequência escolar e identificação de risco de evasão.
+**Sistema de monitoramento de frequência escolar e identificação de risco de evasão.**
 
-O EduAlerta tem como objetivo auxiliar instituições de ensino no acompanhamento da frequência dos alunos, permitindo identificar situações de risco e registrar intervenções para prevenir a evasão escolar.
+O EduAlerta é uma aplicação web desenvolvida com o objetivo de auxiliar instituições de ensino no acompanhamento da frequência dos alunos, identificando possíveis situações de risco de evasão escolar.
 
-## Outros colaboradores do projeto:
-<p align="left">
-  <img src="assets/foto-equipe.png" alt="EduAlerta" width="800">
-</p>
+A plataforma permite registrar a frequência semanal, acompanhar o percentual de faltas acumuladas durante o semestre e gerar alertas para auxiliar a instituição na identificação de alunos que necessitam de acompanhamento.
 
-## Funcionalidades
+O projeto busca utilizar a tecnologia como ferramenta de apoio à gestão escolar e à prevenção da evasão, facilitando a identificação antecipada de situações que exigem atenção.
 
-- Cadastro de alunos e turmas.
-- Gerenciamento de matrículas.
-- Registro semanal de frequência.
-- Cálculo do percentual de faltas por semestre.
-- Geração automática de alertas.
-- Registro de intervenções realizadas pela instituição.
+> 🚧 **Status:** Em desenvolvimento.
 
-## Tecnologias
+---
 
-**Backend:** Java, Spring Boot, Spring Data JPA e Spring Security.
+## 🎯 Objetivos
 
-**Frontend:** HTML, CSS, Bootstrap e JavaScript.
+- Gerenciar alunos, turmas e matrículas.
+- Registrar semanalmente as aulas realizadas e as faltas dos alunos.
+- Acompanhar o percentual de faltas por semestre.
+- Identificar alunos com frequência irregular.
+- Gerar alertas preventivos e críticos.
+- Registrar intervenções realizadas pela instituição.
+- Manter o histórico de frequência e acompanhamento dos alunos.
 
-**Banco de dados:** PostgreSQL (Supabase).
+## ⚙️ Funcionalidades
 
-**Autenticação:** Supabase Auth e JWT.
+| Funcionalidade | Descrição |
+|---|---|
+| Autenticação | Acesso seguro para funcionários da instituição. |
+| Gestão de alunos | Cadastro e gerenciamento dos alunos. |
+| Gestão de turmas | Organização das turmas escolares. |
+| Matrículas | Controle de vínculos entre alunos e turmas, preservando o histórico. |
+| Frequência semanal | Registro das aulas realizadas por dia e das faltas por aluno. |
+| Monitoramento | Cálculo do percentual de faltas acumuladas no semestre. |
+| Alertas | Identificação automática de situações de risco. |
+| Intervenções | Registro das ações realizadas pela instituição. |
 
-## Modelagem do banco de dados
+## 🚨 Classificação de risco
 
-A frequência é registrada por meio de fechamentos semanais por turma, sem a necessidade de cadastrar cada aula individualmente.
+O EduAlerta utiliza o percentual de faltas não justificadas para identificar situações que necessitam de atenção.
+
+| Percentual de faltas | Classificação |
+|---|---|
+| Abaixo de 20% | Regular |
+| De 20% até abaixo de 25% | Preventivo |
+| 25% ou mais | Crítico |
+
+Os limites são utilizados como parâmetros de monitoramento do projeto, considerando a referência de frequência mínima de 75% prevista na legislação educacional aplicável.
+
+## 📅 Controle de frequência
+
+O registro da frequência é realizado por meio de fechamentos semanais por turma.
+
+O professor informa:
+
+- Quantidade de aulas realizadas em cada dia da semana.
+- Quantidade de faltas não justificadas de cada aluno.
+- Quantidade de faltas justificadas de cada aluno.
+
+Dias sem aulas, feriados e suspensões não entram no cálculo da frequência.
+
+O sistema considera apenas fechamentos concluídos para calcular o percentual de faltas acumuladas no semestre.
+
+## 🛠️ Tecnologias
+
+### Backend
+- Java
+- Spring Boot
+- Spring Data JPA
+- Hibernate
+- Spring Security
+- API REST
+- JWT
+
+### Banco de dados
+- PostgreSQL
+- Supabase
+
+### Frontend
+- HTML5
+- CSS3
+- Bootstrap
+- JavaScript (Vanilla JS)
+- Fetch API
+
+### Ferramentas
+- Git
+- GitHub
+- Neovim
+- VSCodium
+
+## 🏗️ Arquitetura
+
+O backend utiliza arquitetura em camadas, separando as responsabilidades da aplicação.
+
+| Camada | Responsabilidade |
+|---|---|
+| Entity | Representação das entidades do banco de dados. |
+| DTO | Transferência e validação dos dados. |
+| Repository | Persistência e acesso aos dados. |
+| Service | Implementação das regras de negócio. |
+| Controller | Exposição dos endpoints REST. |
+| Security | Autenticação e autorização. |
+| Config | Configurações gerais da aplicação. |
+
+O frontend consome a API REST disponibilizada pelo backend. O acesso ao banco de dados é realizado exclusivamente pelo Spring Boot.
+
+### Banco de dados
+
+A modelagem considera as seguintes entidades principais:
+
+- `ALUNO`
+- `RESPONSAVEL`
+- `ALUNO_RESPONSAVEL`
+- `TURMA`
+- `MATRICULA`
+- `USUARIO`
+- `PERIODO_LETIVO`
+- `FECHAMENTO_SEMANAL`
+- `FECHAMENTO_DIA`
+- `FREQUENCIA_SEMANAL`
+- `ALERTA`
+- `ACOMPANHAMENTO`
+- `NOTIFICACAO`
+- `ENCAMINHAMENTO`
+
+
+
 
 ```mermaid
 erDiagram
@@ -163,24 +258,93 @@ erDiagram
 
     ALUNO ||--o{ MATRICULA : possui
     TURMA ||--o{ MATRICULA : recebe
+
     PERIODO_LETIVO ||--o{ FECHAMENTO_SEMANAL : organiza
     TURMA ||--o{ FECHAMENTO_SEMANAL : possui
     USUARIO ||--o{ FECHAMENTO_SEMANAL : registra
+
     FECHAMENTO_SEMANAL ||--|{ FECHAMENTO_DIA : detalha
     FECHAMENTO_SEMANAL ||--o{ FREQUENCIA_SEMANAL : contem
     MATRICULA ||--o{ FREQUENCIA_SEMANAL : recebe
+
     ALUNO ||--o{ ALUNO_RESPONSAVEL : possui
     RESPONSAVEL ||--o{ ALUNO_RESPONSAVEL : associado
+
     ALUNO ||--o{ ALERTA : recebe
     PERIODO_LETIVO ||--o{ ALERTA : referencia
+
     ALERTA ||--o{ ACOMPANHAMENTO : possui
     USUARIO ||--o{ ACOMPANHAMENTO : registra
+
     ALERTA ||--o{ NOTIFICACAO : gera
     RESPONSAVEL ||--o{ NOTIFICACAO : recebe
+
     ALERTA ||--o{ ENCAMINHAMENTO : pode_gerar
 ```
 
-## Status
 
-Projeto em desenvolvimento.
+    
+
+A frequência é registrada semanalmente, sem a necessidade de cadastrar cada aula individualmente.
+
+## 🔐 Autenticação e segurança
+
+A autenticação dos funcionários será realizada pelo Supabase Auth.
+
+O backend Spring Boot será responsável por validar os tokens JWT e controlar as permissões de acesso.
+
+O sistema terá inicialmente dois perfis:
+
+- **SECRETARIA:** gerenciamento e acompanhamento da instituição.
+- **PROFESSOR:** registro e consulta da frequência das turmas autorizadas.
+
+As credenciais e informações sensíveis serão armazenadas por meio de variáveis de ambiente.
+
+## 📂 Estrutura do projeto
+
+A estrutura dos diretórios será documentada conforme o desenvolvimento da aplicação.
+
+```text
+EduAlerta/
+├── backend/
+│   └── ...
+├── frontend/
+│   └── ...
+└── README.md
+```
+
+## 🚀 Executando o projeto
+
+O projeto ainda está em desenvolvimento. As instruções de instalação e execução serão adicionadas conforme a implementação do backend e frontend.
+
+### Pré-requisitos previstos
+
+- Java 21 ou superior.
+- Maven.
+- PostgreSQL.
+- Node.js (opcional para ferramentas auxiliares do frontend).
+- Conta e projeto no Supabase.
+
+## 📌 Escopo inicial
+
+O desenvolvimento será realizado de forma incremental, priorizando:
+
+1. Estruturação do banco de dados.
+2. Configuração do backend Spring Boot.
+3. Autenticação e controle de acesso.
+4. Gerenciamento de alunos, turmas e matrículas.
+5. Fechamento semanal de frequência.
+6. Cálculo semestral e geração de alertas.
+7. Registro de intervenções.
+8. Desenvolvimento e integração do frontend.
+
+Funcionalidades como notificações automáticas e integração com WhatsApp não fazem parte da primeira versão.
+
+---
+
+## 📖 Sobre o projeto
+
+O EduAlerta é um projeto acadêmico desenvolvido no contexto da área de Análise e Desenvolvimento de Sistemas, com foco na aplicação de conceitos de desenvolvimento web, engenharia de software, banco de dados e prevenção da evasão escolar.
+
+**Desenvolvimento:** Em andamento.
 
