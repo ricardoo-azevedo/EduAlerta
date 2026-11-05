@@ -165,7 +165,7 @@ erDiagram
 
     USUARIO {
         bigint id PK
-        string auth_user_id UK
+        uuid auth_user_id FK, UK
         string nome
         string email
         string perfil
@@ -256,12 +256,12 @@ erDiagram
         string observacao
     }
 
-    ALUNO ||--o{ MATRICULA : possui
-    TURMA ||--o{ MATRICULA : recebe
-
     PERIODO_LETIVO ||--o{ FECHAMENTO_SEMANAL : organiza
     TURMA ||--o{ FECHAMENTO_SEMANAL : possui
     USUARIO ||--o{ FECHAMENTO_SEMANAL : registra
+
+    ALUNO ||--o{ MATRICULA : possui
+    TURMA ||--o{ MATRICULA : recebe
 
     FECHAMENTO_SEMANAL ||--|{ FECHAMENTO_DIA : detalha
     FECHAMENTO_SEMANAL ||--o{ FREQUENCIA_SEMANAL : contem
