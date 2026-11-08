@@ -1,88 +1,191 @@
 const config = window.EDUALERTA_CONFIG;
 
-const clienteAuth = config.supabaseUrl && config.supabaseAnonKey && window.supabase
-    ? window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey)
-    : null;
+const clienteAuth = config.supabaseUrl &&
+  config.supabaseAnonKey &&
+  window.supabase
+  ? window.supabase.createClient(
+    config.supabaseUrl,
+    config.supabaseAnonKey
+  )
+  : null;
 
-async function verificarSecretaria() {
-    if (!clienteAuth || !config.usuarioAtualPath) return false;
 
-    const { data, error } = await clienteAuth.auth.getUser();
+async function obterToken() {
 
-    if (error || !data.user) return false;
+  if (!clienteAuth) {
+    throw new Error("Supabase Auth não configurado.");
+  }
 
-    const { data: sessao } = await clienteAuth.auth.getSession();
-    const token = sessao.session?.access_token;
+  const { data, error } = await clienteAuth.auth.getSession();
 
-    if (!token) return false;
+  if (error) {
+    throw new Error("Não foi possível recuperar a sessão.");
+  }
 
-    const resposta = await fetch(
-        config.apiBaseUrl.replace(/\/$/, "") + config.usuarioAtualPath,
-        {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        }
-    );
+  const token = data.session?.access_token;
 
-    if (!resposta.ok) return false;
+  if (!token) {
+    throw new Error("Sessão expirada. Entre novamente.");
+  }
 
-    const usuario = await resposta.json();
-
-    return usuario.perfil === "SECRETARIA" &&
-        usuario.ativo === true &&
-        usuario.alterarSenhaObrigatorio !== true;
+  return token;
 }
 
-async function protegerPagina() {
-    try {
-        if (!await verificarSecretaria()) {
-            window.location.replace("../index.html");
-            return false;
-        }
-
-        document.body.hidden = false;
-        return true;
-    } catch {
-        window.location.replace("../index.html");
-        return false;
-    }
-}
 
 async function requisicaoAPI(caminho, opcoes = {}) {
-    if (!clienteAuth) {
-        throw new Error("Supabase Auth não configurado.");
+
+  const token = await obterToken();
+
+  const resposta = await fetch(
+    config.apiBaseUrl.replace(/\/$/, "") + caminho,
+    {
+      ...opcoes,
+      headers: {
+        ...(opcoes.headers || {}),
+        Authorization: `Bearer ${token}`
+      }
+    }
+  );
+
+  if (!resposta.ok) {
+
+    let mensagem = `Erro na comunicação com a API (${resposta.status}).`;
+
+    try {
+      const erro = await resposta.json();
+
+      mensagem =
+        erro.detail ||
+        erro.message ||
+        erro.mensagem ||
+        mensagem;
+
+    } catch {
+      // Mantém a mensagem padrão caso a resposta não seja JSON.
     }
 
-    const { data } = await clienteAuth.auth.getSession();
-    const token = data.session?.access_token;
+    throw new Error(mensagem);
+  }
 
-    if (!token) {
-        throw new Error("Sessão expirada.");
-    }
-
-    const resposta = await fetch(
-        config.apiBaseUrl.replace(/\/$/, "") + caminho,
-        {
-            ...opcoes,
-            headers: {
-                ...(opcoes.headers || {}),
-                Authorization: `Bearer ${token}`
-            }
-        }
-    );
-
-    if (!resposta.ok) {
-        throw new Error(`Erro da API: ${resposta.status}`);
-    }
-
-    return resposta.status === 204 ? null : resposta.json();
+  return resposta.status === 204
+    ? null
+    : resposta.json();
 }
 
-async function sair() {
-    if (clienteAuth) {
-        await clienteAuth.auth.signOut();
+
+async function obterUsuarioAtual() {
+
+  return requisicaoAPI(config.usuarioAtualPath);
+}
+
+
+async function verificarSecretaria() {
+
+  try {
+
+    const usuario = await obterUsuarioAtual();
+
+    return usuario.perfil === "SECRETARIA" &&
+      usuario.ativo === true;
+
+  } catch {
+    return false;
+  }
+}
+
+
+async function protegerPagina() {
+
+  try {
+
+    if (!clienteAuth) {
+      window.location.replace("index.html");
+      return false;
     }
 
-    window.location.replace("../index.html");
+    const usuario = await obterUsuarioAtual();
+
+    if (
+      usuario.perfil !== "SECRETARIA" ||
+      usuario.ativo !== true
+    ) {
+      await clienteAuth.auth.signOut();
+
+      window.location.replace("index.html");
+      return false;
+    }
+
+    if (usuario.alterarSenhaObrigatorio) {
+
+      window.location.replace("alterar-senha.html");
+      return false;
+    }
+
+    document.body.hidden = false;
+
+    return true;
+
+  } catch {
+
+    if (clienteAuth) {
+      await clienteAuth.auth.signOut();
+    }
+
+    window.location.replace("index.html");
+
+    return false;
+  }
+}
+
+
+async function protegerTrocaSenha() {
+
+  try {
+
+    if (!clienteAuth) {
+      window.location.replace("index.html");
+      return false;
+    }
+
+    const usuario = await obterUsuarioAtual();
+
+    if (
+      usuario.perfil !== "SECRETARIA" ||
+      usuario.ativo !== true
+    ) {
+      await clienteAuth.auth.signOut();
+
+      window.location.replace("index.html");
+      return false;
+    }
+
+    if (!usuario.alterarSenhaObrigatorio) {
+      window.location.replace("painel.html");
+      return false;
+    }
+
+    document.body.hidden = false;
+
+    return true;
+
+  } catch {
+
+    if (clienteAuth) {
+      await clienteAuth.auth.signOut();
+    }
+
+    window.location.replace("index.html");
+
+    return false;
+  }
+}
+
+
+async function sair() {
+
+  if (clienteAuth) {
+    await clienteAuth.auth.signOut();
+  }
+
+  window.location.replace("index.html");
 }
