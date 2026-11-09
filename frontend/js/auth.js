@@ -1,3 +1,4 @@
+
 const config = window.EDUALERTA_CONFIG;
 
 const clienteAuth = config.supabaseUrl &&
@@ -9,9 +10,9 @@ const clienteAuth = config.supabaseUrl &&
   )
   : null;
 
+window.usuarioEduAlerta = null;
 
 async function obterToken() {
-
   if (!clienteAuth) {
     throw new Error("Supabase Auth não configurado.");
   }
@@ -31,9 +32,7 @@ async function obterToken() {
   return token;
 }
 
-
 async function requisicaoAPI(caminho, opcoes = {}) {
-
   const token = await obterToken();
 
   const resposta = await fetch(
@@ -48,7 +47,6 @@ async function requisicaoAPI(caminho, opcoes = {}) {
   );
 
   if (!resposta.ok) {
-
     let mensagem = `Erro na comunicação com a API (${resposta.status}).`;
 
     try {
@@ -59,45 +57,42 @@ async function requisicaoAPI(caminho, opcoes = {}) {
         erro.message ||
         erro.mensagem ||
         mensagem;
-
     } catch {
-      // Mantém a mensagem padrão caso a resposta não seja JSON.
+      // Mantém a mensagem padrão quando a API não retorna JSON.
     }
 
     throw new Error(mensagem);
   }
 
-  return resposta.status === 204
-    ? null
-    : resposta.json();
+  if (resposta.status === 204) {
+    return null;
+  }
+
+  const texto = await resposta.text();
+  return texto ? JSON.parse(texto) : null;
 }
 
-
 async function obterUsuarioAtual() {
-
   return requisicaoAPI(config.usuarioAtualPath);
 }
 
-
-async function verificarSecretaria() {
-
-  try {
-
-    const usuario = await obterUsuarioAtual();
-
-    return usuario.perfil === "SECRETARIA" &&
-      usuario.ativo === true;
-
-  } catch {
-    return false;
-  }
+function perfilPermitido(usuario) {
+  return usuario &&
+    (usuario.perfil === "ADM" || usuario.perfil === "SECRETARIA") &&
+    usuario.ativo === true;
 }
 
+async function encerrarSessaoERedirecionar() {
+  if (clienteAuth) {
+    await clienteAuth.auth.signOut();
+  }
+
+  window.usuarioEduAlerta = null;
+  window.location.replace("index.html");
+}
 
 async function protegerPagina() {
-
   try {
-
     if (!clienteAuth) {
       window.location.replace("index.html");
       return false;
@@ -105,43 +100,29 @@ async function protegerPagina() {
 
     const usuario = await obterUsuarioAtual();
 
-    if (
-      usuario.perfil !== "SECRETARIA" ||
-      usuario.ativo !== true
-    ) {
-      await clienteAuth.auth.signOut();
-
-      window.location.replace("index.html");
+    if (!perfilPermitido(usuario)) {
+      await encerrarSessaoERedirecionar();
       return false;
     }
 
     if (usuario.alterarSenhaObrigatorio) {
-
       window.location.replace("alterar-senha.html");
       return false;
     }
 
+    window.usuarioEduAlerta = usuario;
     document.body.hidden = false;
 
     return true;
 
   } catch {
-
-    if (clienteAuth) {
-      await clienteAuth.auth.signOut();
-    }
-
-    window.location.replace("index.html");
-
+    await encerrarSessaoERedirecionar();
     return false;
   }
 }
 
-
 async function protegerTrocaSenha() {
-
   try {
-
     if (!clienteAuth) {
       window.location.replace("index.html");
       return false;
@@ -149,13 +130,8 @@ async function protegerTrocaSenha() {
 
     const usuario = await obterUsuarioAtual();
 
-    if (
-      usuario.perfil !== "SECRETARIA" ||
-      usuario.ativo !== true
-    ) {
-      await clienteAuth.auth.signOut();
-
-      window.location.replace("index.html");
+    if (!perfilPermitido(usuario)) {
+      await encerrarSessaoERedirecionar();
       return false;
     }
 
@@ -164,28 +140,23 @@ async function protegerTrocaSenha() {
       return false;
     }
 
+    window.usuarioEduAlerta = usuario;
     document.body.hidden = false;
 
     return true;
 
   } catch {
-
-    if (clienteAuth) {
-      await clienteAuth.auth.signOut();
-    }
-
-    window.location.replace("index.html");
-
+    await encerrarSessaoERedirecionar();
     return false;
   }
 }
 
-
 async function sair() {
-
   if (clienteAuth) {
     await clienteAuth.auth.signOut();
   }
 
+  window.usuarioEduAlerta = null;
   window.location.replace("index.html");
 }
+

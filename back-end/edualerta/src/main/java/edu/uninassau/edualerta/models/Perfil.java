@@ -1,3 +1,6 @@
 package edu.uninassau.edualerta.models;
 
-public enum Perfil { SECRETARIA }
+public enum Perfil {
+    SECRETARIA,
+    ADM
+}

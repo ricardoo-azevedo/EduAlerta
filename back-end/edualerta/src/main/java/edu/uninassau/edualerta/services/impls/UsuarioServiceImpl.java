@@ -1,9 +1,11 @@
+
 package edu.uninassau.edualerta.services.impls;
 
 import edu.uninassau.edualerta.config.security.UsuarioContext;
 import edu.uninassau.edualerta.dtos.UsuarioCadastroDto;
 import edu.uninassau.edualerta.dtos.UsuarioResponseDto;
 import edu.uninassau.edualerta.dtos.UsuarioSenhaUpdateDto;
+import edu.uninassau.edualerta.dtos.UsuarioStatusUpdateDto;
 import edu.uninassau.edualerta.dtos.UsuarioUpdateDto;
 import edu.uninassau.edualerta.models.Perfil;
 import edu.uninassau.edualerta.models.Usuario;
@@ -37,14 +39,15 @@ public class UsuarioServiceImpl implements UsuarioServiceInterface {
   @Override
   public UsuarioResponseDto cadastrar(UsuarioCadastroDto dto, Jwt jwt) {
 
-    Usuario secretariaLogada = usuarioContext.getUsuario(jwt);
+    Usuario usuarioLogado = usuarioContext.getUsuario(jwt);
 
-    if (secretariaLogada.getPerfil() != Perfil.SECRETARIA) {
+    if (usuarioLogado.getPerfil() != Perfil.ADM) {
       throw new AccessDeniedException(
-          "Somente uma secretaria pode cadastrar outra secretaria");
+          "Somente um administrador pode cadastrar usuários");
     }
 
     String nome = dto.getNome().trim();
+
     String email = dto.getEmail().trim().toLowerCase(Locale.ROOT);
 
     if (usuarioRepository.existsByEmailIgnoreCase(email)) {
@@ -52,7 +55,6 @@ public class UsuarioServiceImpl implements UsuarioServiceInterface {
           "Já existe um usuário cadastrado com esse e-mail");
     }
 
-    // Valida as integrações antes de criar a conta externa.
     supabaseAuthService.validarConfiguracaoCriacaoUsuario();
     emailService.validarConfiguracao();
 
@@ -125,6 +127,8 @@ public class UsuarioServiceImpl implements UsuarioServiceInterface {
 
     Usuario usuario = usuarioContext.getUsuario(jwt);
 
+    supabaseAuthService.atualizarStatusUsuario(usuario.getAuthUserId(), false);
+
     usuario.setAtivo(false);
   }
 
@@ -157,12 +161,80 @@ public class UsuarioServiceImpl implements UsuarioServiceInterface {
         .toList();
   }
 
+  @Override
+  public UsuarioResponseDto alterarNomeSecretaria(Long id, UsuarioUpdateDto dto,
+                                                  Jwt jwt) {
+
+    Usuario adm = usuarioContext.getUsuario(jwt);
+
+    validarPermissaoAdm(adm);
+
+    Usuario secretaria = buscarSecretaria(id);
+
+    if (adm.getId().equals(secretaria.getId())) {
+      throw new AccessDeniedException(
+          "Você não pode alterar sua própria conta por essa operação");
+    }
+
+    secretaria.setNome(dto.getNome().trim());
+
+    return converterParaDto(secretaria);
+  }
+
+  @Override
+  public UsuarioResponseDto
+  alterarStatusSecretaria(Long id, UsuarioStatusUpdateDto dto, Jwt jwt) {
+
+    Usuario adm = usuarioContext.getUsuario(jwt);
+
+    validarPermissaoAdm(adm);
+
+    Usuario secretaria = buscarSecretaria(id);
+
+    if (adm.getId().equals(secretaria.getId())) {
+      throw new AccessDeniedException(
+          "Você não pode alterar o status da própria conta por essa operação");
+    }
+
+    boolean novoStatus = dto.getAtivo();
+
+    supabaseAuthService.atualizarStatusUsuario(secretaria.getAuthUserId(),
+                                               novoStatus);
+
+    secretaria.setAtivo(novoStatus);
+
+    return converterParaDto(secretaria);
+  }
+
+  private void validarPermissaoAdm(Usuario usuario) {
+
+    if (usuario.getPerfil() != Perfil.ADM) {
+      throw new AccessDeniedException(
+          "Somente um administrador pode realizar essa operação");
+    }
+  }
+
+  private Usuario buscarSecretaria(Long id) {
+
+    Usuario usuario = usuarioRepository.findById(id).orElseThrow(
+        () -> new IllegalArgumentException("Usuário não encontrado"));
+
+    if (usuario.getPerfil() != Perfil.SECRETARIA) {
+      throw new AccessDeniedException(
+          "Essa operação só pode ser realizada em contas de secretaria");
+    }
+
+    return usuario;
+  }
+
   private String gerarSenhaTemporaria() {
 
     StringBuilder senha = new StringBuilder();
 
     for (int i = 0; i < 18; i++) {
+
       int indice = RANDOM.nextInt(CARACTERES_SENHA.length());
+
       senha.append(CARACTERES_SENHA.charAt(indice));
     }
 

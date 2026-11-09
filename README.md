@@ -23,14 +23,15 @@ O sistema busca utilizar a tecnologia como ferramenta de apoio à gestão escola
 - Gerar alertas preventivos e críticos.
 - Registrar intervenções realizadas pela instituição.
 - Manter o histórico de frequência, alertas e acompanhamentos.
+- Gerenciar os usuários internos por meio de perfis administrativos.
 - Auxiliar a secretaria na identificação de possíveis situações de evasão escolar.
 
 ## ⚙️ Funcionalidades
 
 | Funcionalidade | Descrição |
 |---|---|
-| Autenticação | Acesso seguro para usuários da secretaria por meio do Supabase Auth. |
-| Gestão de usuários | Cadastro, consulta, atualização e desativação de usuários da secretaria. |
+| Autenticação | Acesso seguro por meio do Supabase Auth, com validação de identidade e autorização pelo backend. |
+| Gestão de usuários | Cadastro de secretarias, consulta de usuários, alteração de nomes e ativação ou desativação de contas, conforme o perfil de acesso. |
 | Gestão de alunos | Cadastro e gerenciamento dos alunos. |
 | Gestão de turmas | Organização das turmas escolares. |
 | Matrículas | Controle dos vínculos entre alunos e turmas, preservando o histórico de movimentações. |
@@ -43,6 +44,75 @@ O sistema busca utilizar a tecnologia como ferramenta de apoio à gestão escola
 | Notificações | Registro das notificações relacionadas aos alertas. |
 
 As funcionalidades são desenvolvidas de forma incremental. A presença de uma funcionalidade nesta documentação representa o escopo previsto, não necessariamente uma implementação já concluída.
+
+## 🔐 Perfis e permissões de acesso
+
+O EduAlerta possui dois perfis de acesso na primeira versão: `ADM` e `SECRETARIA`.
+
+Cada perfil possui permissões específicas, definidas no backend.
+
+| Operação | ADM | SECRETARIA |
+|---|:---:|:---:|
+| Acessar o sistema | Sim | Sim |
+| Consultar a lista de usuários | Sim | Sim |
+| Buscar usuários | Sim | Sim |
+| Cadastrar novas secretarias | Sim | Não |
+| Alterar o nome de outras secretarias | Sim | Não |
+| Ativar contas de secretaria | Sim | Não |
+| Desativar contas de secretaria | Sim | Não |
+| Gerenciar alunos, turmas e matrículas | Sim | Sim |
+| Registrar e fechar frequências | Sim | Sim |
+| Consultar alertas | Sim | Sim |
+| Registrar acompanhamentos | Sim | Sim |
+
+### ADM
+
+O perfil `ADM` é responsável pelo gerenciamento das contas de secretaria.
+
+Suas permissões incluem:
+
+- Cadastrar novos usuários com perfil `SECRETARIA`.
+- Consultar e buscar usuários cadastrados.
+- Alterar o nome de outras contas `SECRETARIA`.
+- Ativar e desativar contas `SECRETARIA`.
+- Acessar as demais funcionalidades do sistema.
+
+O ADM não utiliza os endpoints administrativos para alterar outras contas ADM. O gerenciamento administrativo de usuários é direcionado às contas de secretaria.
+
+### SECRETARIA
+
+O perfil `SECRETARIA` possui acesso às funcionalidades operacionais do EduAlerta.
+
+Suas permissões incluem:
+
+- Consultar e buscar usuários cadastrados.
+- Gerenciar alunos, turmas e matrículas.
+- Cadastrar e associar responsáveis.
+- Registrar e fechar frequências semanais.
+- Consultar alertas e registrar acompanhamentos.
+- Utilizar as demais funcionalidades disponíveis no sistema.
+
+A secretaria não pode cadastrar novos usuários, alterar o nome de outras secretarias ou modificar o status de suas contas.
+
+### Provisionamento inicial
+
+Não existe cadastro público de usuários.
+
+A primeira conta administrativa é provisionada manualmente no Supabase Auth e vinculada ao registro correspondente na tabela `USUARIO`, com perfil `ADM`.
+
+Após esse provisionamento, o ADM pode cadastrar novas contas com perfil `SECRETARIA`.
+
+O cadastro de novas secretarias utiliza uma senha temporária gerada pelo backend e enviada por e-mail. No primeiro acesso, o usuário deve alterar a senha antes de utilizar as demais funcionalidades protegidas.
+
+### Contas desativadas
+
+Uma conta de secretaria desativada não pode realizar login no sistema.
+
+O bloqueio é aplicado na autenticação pelo Supabase Auth e também é verificado pelo backend. Assim, mesmo que o usuário possua um JWT emitido anteriormente, o backend deve rejeitar as requisições quando a conta estiver inativa.
+
+A reativação da conta é uma operação administrativa realizada pelo ADM.
+
+Alunos e responsáveis não possuem acesso autenticado ao sistema na primeira versão.
 
 ## 🚨 Classificação de risco
 
@@ -205,14 +275,12 @@ O backend utiliza arquitetura em camadas, separando as responsabilidades da apli
 2. O Supabase retorna um JWT de acesso.
 3. O frontend utiliza o token nas requisições protegidas.
 4. O Spring Security valida o JWT recebido.
-5. O backend identifica o usuário autenticado e verifica seu cadastro no banco do EduAlerta.
-6. As regras de negócio são executadas pelos serviços.
+5. O backend identifica o usuário autenticado e verifica seu cadastro no banco do EduAlerta, incluindo seu perfil e status.
+6. As regras de negócio e permissões são verificadas pelos serviços.
 7. O Spring Data JPA realiza as operações no PostgreSQL.
 8. A API retorna os resultados ao frontend em JSON.
 
 O frontend não acessa diretamente o PostgreSQL. Toda operação sobre os dados da aplicação passa pelo backend.
-
----
 
 ## 🗄️ Banco de dados
 
@@ -228,7 +296,7 @@ A aplicação utiliza o schema `app` para organizar as tabelas do sistema.
 | `TURMA` | Representa as turmas da instituição. |
 | `ALUNO` | Armazena os dados dos alunos. |
 | `MATRICULA` | Representa o vínculo do aluno com uma turma, preservando o histórico. |
-| `USUARIO` | Armazena os usuários internos autorizados a acessar o sistema. |
+| `USUARIO` | Armazena os usuários internos autorizados a acessar o sistema, incluindo seus perfis e status. |
 | `FECHAMENTO_SEMANAL` | Representa o fechamento de frequência de uma turma em determinada semana. |
 | `FECHAMENTO_DIA` | Armazena a quantidade de aulas realizadas em cada dia do fechamento. |
 | `FREQUENCIA_SEMANAL` | Registra as faltas e faltas justificadas dos alunos em determinado fechamento. |
@@ -429,13 +497,14 @@ O backend Spring Boot atua como servidor de recursos, validando os tokens JWT e 
 
 ### Perfis de acesso
 
-A primeira versão possui exclusivamente o perfil:
+A primeira versão possui dois perfis:
 
-- **SECRETARIA:** gerenciamento dos dados escolares, registro e fechamento das frequências, consulta dos alertas e registro dos acompanhamentos.
+- **ADM:** responsável pelo gerenciamento das contas de secretaria, incluindo cadastro, alteração de nomes e ativação ou desativação de contas. Também possui acesso às demais funcionalidades do sistema.
+- **SECRETARIA:** responsável pela operação do sistema, incluindo gerenciamento dos dados escolares, registro e fechamento das frequências, consulta dos alertas e registro dos acompanhamentos. Pode consultar a lista de usuários, mas não administrar outras contas.
 
 O perfil **PROFESSOR foi retirado do escopo inicial**. Portanto, não haverá login, cadastro ou acesso de professores à plataforma nesta versão.
 
-O registro de frequência e o fechamento semanal ficam sob responsabilidade dos usuários autorizados da secretaria.
+O registro de frequência e o fechamento semanal ficam sob responsabilidade dos usuários autorizados da secretaria e dos administradores.
 
 Alunos e responsáveis também não possuem acesso autenticado ao sistema na primeira versão.
 
@@ -443,13 +512,25 @@ Alunos e responsáveis também não possuem acesso autenticado ao sistema na pri
 
 Não existe cadastro público de usuários.
 
-A primeira secretaria é provisionada manualmente no Supabase Auth e vinculada ao registro correspondente na tabela `USUARIO`.
+A primeira conta administrativa é provisionada manualmente no Supabase Auth e vinculada ao registro correspondente na tabela `USUARIO`, com perfil `ADM`.
 
-Depois do provisionamento inicial, uma secretaria ativa e autenticada pode cadastrar outras secretarias.
+Depois do provisionamento inicial, somente um ADM pode cadastrar novas contas de secretaria.
 
 O cadastro utiliza uma senha temporária gerada pelo backend e enviada por e-mail. O usuário deve alterá-la no primeiro acesso antes de utilizar as demais funcionalidades protegidas.
 
-O Supabase Auth é responsável pelas credenciais e pela identidade do usuário. A tabela `USUARIO` mantém os dados necessários para a operação interna do EduAlerta.
+O ADM pode alterar o nome e o status das contas de secretaria. Não existe operação administrativa para alterar o e-mail de terceiros.
+
+A SECRETARIA pode consultar e buscar usuários, mas não pode cadastrar, alterar nomes ou ativar e desativar outras contas.
+
+O Supabase Auth é responsável pelas credenciais e pela identidade do usuário. A tabela `USUARIO` mantém os dados necessários para a operação interna do EduAlerta, incluindo perfil e status da conta.
+
+### Bloqueio de usuários inativos
+
+A desativação de uma conta é uma operação administrativa realizada pelo ADM.
+
+Quando uma conta é desativada, o acesso deve ser bloqueado no Supabase Auth. Além disso, o backend verifica o status da conta vinculada ao JWT recebido, impedindo que tokens anteriormente emitidos continuem autorizando operações.
+
+A reativação também é realizada pelo ADM e permite que a conta volte a autenticar, desde que esteja em condições válidas de acesso.
 
 ---
 
@@ -598,8 +679,8 @@ O desenvolvimento é realizado de forma incremental, priorizando os recursos ess
 1. Modelagem e estruturação do banco de dados.
 2. Configuração do backend Spring Boot.
 3. Integração com Supabase Auth.
-4. Autenticação e controle de acesso da secretaria.
-5. Gerenciamento de usuários.
+4. Autenticação e controle de acesso dos perfis ADM e SECRETARIA.
+5. Gerenciamento administrativo de usuários.
 6. Gerenciamento de alunos, turmas e matrículas.
 7. Cadastro e associação de responsáveis.
 8. Fechamento semanal de frequência.

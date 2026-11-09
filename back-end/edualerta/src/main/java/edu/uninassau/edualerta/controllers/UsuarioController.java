@@ -3,6 +3,7 @@ package edu.uninassau.edualerta.controllers;
 import edu.uninassau.edualerta.dtos.UsuarioCadastroDto;
 import edu.uninassau.edualerta.dtos.UsuarioResponseDto;
 import edu.uninassau.edualerta.dtos.UsuarioSenhaUpdateDto;
+import edu.uninassau.edualerta.dtos.UsuarioStatusUpdateDto;
 import edu.uninassau.edualerta.dtos.UsuarioUpdateDto;
 import edu.uninassau.edualerta.services.interfaces.UsuarioServiceInterface;
 import jakarta.validation.Valid;
@@ -22,9 +23,8 @@ public class UsuarioController {
   private final UsuarioServiceInterface usuarioService;
 
   @PostMapping
-  public ResponseEntity<UsuarioResponseDto>
-  cadastrar(@RequestBody @Valid UsuarioCadastroDto dto,
-            @AuthenticationPrincipal Jwt jwt) {
+  public ResponseEntity<UsuarioResponseDto> cadastrar(@RequestBody @Valid UsuarioCadastroDto dto,
+      @AuthenticationPrincipal Jwt jwt) {
 
     UsuarioResponseDto resposta = usuarioService.cadastrar(dto, jwt);
 
@@ -32,24 +32,21 @@ public class UsuarioController {
   }
 
   @GetMapping("/me")
-  public ResponseEntity<UsuarioResponseDto>
-  me(@AuthenticationPrincipal Jwt jwt) {
+  public ResponseEntity<UsuarioResponseDto> me(@AuthenticationPrincipal Jwt jwt) {
 
     return ResponseEntity.ok(usuarioService.me(jwt));
   }
 
   @PutMapping("/me")
-  public ResponseEntity<UsuarioResponseDto>
-  atualizar(@AuthenticationPrincipal Jwt jwt,
-            @RequestBody @Valid UsuarioUpdateDto dto) {
+  public ResponseEntity<UsuarioResponseDto> atualizar(@AuthenticationPrincipal Jwt jwt,
+      @RequestBody @Valid UsuarioUpdateDto dto) {
 
     return ResponseEntity.ok(usuarioService.atualizarUsuario(jwt, dto));
   }
 
   @PutMapping("/me/senha")
-  public ResponseEntity<Void>
-  atualizarSenha(@AuthenticationPrincipal Jwt jwt,
-                 @RequestBody @Valid UsuarioSenhaUpdateDto dto) {
+  public ResponseEntity<Void> atualizarSenha(@AuthenticationPrincipal Jwt jwt,
+      @RequestBody @Valid UsuarioSenhaUpdateDto dto) {
 
     usuarioService.atualizarSenha(jwt, dto);
 
@@ -65,16 +62,33 @@ public class UsuarioController {
   }
 
   @GetMapping
-  public ResponseEntity<List<UsuarioResponseDto>>
-  listar(@AuthenticationPrincipal Jwt jwt) {
+  public ResponseEntity<List<UsuarioResponseDto>> listar(@AuthenticationPrincipal Jwt jwt) {
 
     return ResponseEntity.ok(usuarioService.listar(jwt));
   }
 
   @GetMapping("/buscar")
-  public ResponseEntity<List<UsuarioResponseDto>>
-  buscarPorNome(@RequestParam String nome, @AuthenticationPrincipal Jwt jwt) {
+  public ResponseEntity<List<UsuarioResponseDto>> buscarPorNome(@RequestParam String nome,
+      @AuthenticationPrincipal Jwt jwt) {
 
     return ResponseEntity.ok(usuarioService.buscarPorNome(nome, jwt));
+  }
+
+  @PutMapping("/{id}/nome")
+  public ResponseEntity<UsuarioResponseDto> alterarNomeSecretaria(@PathVariable Long id,
+      @RequestBody @Valid UsuarioUpdateDto dto,
+      @AuthenticationPrincipal Jwt jwt) {
+
+    return ResponseEntity.ok(
+        usuarioService.alterarNomeSecretaria(id, dto, jwt));
+  }
+
+  @PutMapping("/{id}/status")
+  public ResponseEntity<UsuarioResponseDto> alterarStatusSecretaria(@PathVariable Long id,
+      @RequestBody @Valid UsuarioStatusUpdateDto dto,
+      @AuthenticationPrincipal Jwt jwt) {
+
+    return ResponseEntity.ok(
+        usuarioService.alterarStatusSecretaria(id, dto, jwt));
   }
 }

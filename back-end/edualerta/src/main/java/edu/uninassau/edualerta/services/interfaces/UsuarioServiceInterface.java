@@ -3,6 +3,7 @@ package edu.uninassau.edualerta.services.interfaces;
 import edu.uninassau.edualerta.dtos.UsuarioCadastroDto;
 import edu.uninassau.edualerta.dtos.UsuarioResponseDto;
 import edu.uninassau.edualerta.dtos.UsuarioSenhaUpdateDto;
+import edu.uninassau.edualerta.dtos.UsuarioStatusUpdateDto;
 import edu.uninassau.edualerta.dtos.UsuarioUpdateDto;
 import java.util.List;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -22,4 +23,9 @@ public interface UsuarioServiceInterface {
   List<UsuarioResponseDto> listar(Jwt jwt);
 
   List<UsuarioResponseDto> buscarPorNome(String nome, Jwt jwt);
+
+  UsuarioResponseDto alterarNomeSecretaria(Long id, UsuarioUpdateDto dto,
+      Jwt jwt);
+
+  UsuarioResponseDto alterarStatusSecretaria(Long id, UsuarioStatusUpdateDto dto, Jwt jwt);
 }

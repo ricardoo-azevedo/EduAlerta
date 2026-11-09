@@ -1,4 +1,3 @@
-
 package edu.uninassau.edualerta.services.impls;
 
 import java.util.Map;
@@ -16,31 +15,34 @@ public class SupabaseAuthService {
 
   private final RestClient restClient = RestClient.create();
 
-  @Value("${supabase.url:}") private String supabaseUrl;
+  @Value("${supabase.url:}")
+  private String supabaseUrl;
 
-  @Value("${supabase.secret-key:}") private String secretKey;
+  @Value("${supabase.secret-key:}")
+  private String secretKey;
 
-  @Value("${supabase.publishable-key:}") private String publishableKey;
+  @Value("${supabase.publishable-key:}")
+  private String publishableKey;
 
-  public void validarConfiguracaoCriacaoUsuario() { exigirConfiguracaoAdmin(); }
+  public void validarConfiguracaoCriacaoUsuario() {
+    exigirConfiguracaoAdmin();
+  }
 
   public UUID criarUsuario(String nome, String email, String senha) {
 
     exigirConfiguracaoAdmin();
 
-    Map<String, Object> body =
-        Map.of("email", email, "password", senha, "email_confirm", true,
-               "user_metadata", Map.of("nome", nome));
+    Map<String, Object> body = Map.of("email", email, "password", senha, "email_confirm", true,
+        "user_metadata", Map.of("nome", nome));
 
-    JsonNode resposta =
-        restClient.post()
-            .uri(urlBase() + "/auth/v1/admin/users")
-            .header("apikey", secretKey)
-            .header(HttpHeaders.AUTHORIZATION, "Bearer " + secretKey)
-            .contentType(MediaType.APPLICATION_JSON)
-            .body(body)
-            .retrieve()
-            .body(JsonNode.class);
+    JsonNode resposta = restClient.post()
+        .uri(urlBase() + "/auth/v1/admin/users")
+        .header("apikey", secretKey)
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + secretKey)
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(body)
+        .retrieve()
+        .body(JsonNode.class);
 
     if (resposta == null || resposta.get("id") == null) {
       throw new IllegalStateException(
@@ -55,8 +57,8 @@ public class SupabaseAuthService {
     exigirConfiguracaoUrl();
 
     if (!StringUtils.hasText(publishableKey)) {
-      throw new IllegalStateException("Configure supabase.publishable-key " +
-                                      "para permitir a alteração de senha");
+      throw new IllegalStateException("Configure supabase.publishable-key "
+          + "para permitir a alteração de senha");
     }
 
     Map<String, String> body = Map.of("password", novaSenha);
@@ -83,13 +85,36 @@ public class SupabaseAuthService {
         .toBodilessEntity();
   }
 
+  public void atualizarStatusUsuario(UUID authUserId, boolean ativo) {
+
+    exigirConfiguracaoAdmin();
+
+    /*
+     * 876000 horas correspondem a 100 anos.
+     * "none" remove o bloqueio anterior.
+     */
+    String duracaoBloqueio = ativo ? "none" : "876000h";
+
+    Map<String, String> body = Map.of("ban_duration", duracaoBloqueio);
+
+    restClient.put()
+        .uri(urlBase() + "/auth/v1/admin/users/{id}", authUserId)
+        .header("apikey", secretKey)
+        .header(HttpHeaders.AUTHORIZATION, "Bearer " + secretKey)
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(body)
+        .retrieve()
+        .toBodilessEntity();
+  }
+
   private void exigirConfiguracaoAdmin() {
 
     exigirConfiguracaoUrl();
 
     if (!StringUtils.hasText(secretKey)) {
       throw new IllegalStateException(
-          "Configure supabase.secret-key para utilizar o cadastro de usuários");
+          "Configure supabase.secret-key "
+              + "para utilizar a operação administrativa");
     }
   }
 
@@ -97,9 +122,12 @@ public class SupabaseAuthService {
 
     if (!StringUtils.hasText(supabaseUrl)) {
       throw new IllegalStateException(
-          "Configure supabase.url para utilizar a integração com Supabase");
+          "Configure supabase.url "
+              + "para utilizar a integração com Supabase");
     }
   }
 
-  private String urlBase() { return supabaseUrl.trim().replaceAll("/+$", ""); }
+  private String urlBase() {
+    return supabaseUrl.trim().replaceAll("/+$", "");
+  }
 }
