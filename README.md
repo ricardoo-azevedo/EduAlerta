@@ -1,3 +1,6 @@
+# Atenção: 
+**Para avaliar o projeto em desenvolvimento, ele se encontra na branch develop**
+
 # EduAlerta
 
 Sistema web de monitoramento de frequência escolar e identificação de risco de evasão.
