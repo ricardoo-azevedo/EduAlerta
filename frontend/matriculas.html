@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -13,23 +14,159 @@
     <div id="navegacao"></div>
 
     <main class="container page-shell">
-        <section id="matriculas">
+        <section>
             <div class="page-heading">
                 <h2><i class="bi bi-journal-check me-2"></i>Matrículas e Transferências</h2>
-                <p>Controle os vínculos entre alunos e turmas, preservando o histórico escolar.</p>
+                <p>Gerencie vínculos entre alunos e turmas, mantendo o histórico escolar.</p>
             </div>
 
-            <div class="status-note">
-                <i class="bi bi-plug me-2"></i>
-                Interface preparada para integração. Dados reais dependem dos endpoints da API.
+            <div id="mensagem" role="status" aria-live="polite"></div>
+
+            <ul class="nav nav-tabs mb-4" id="abasGestao">
+                <li class="nav-item">
+                    <button class="nav-link active" type="button" data-bs-target="#secaoMatriculas">
+                        Matrículas
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" type="button" data-bs-target="#secaoPeriodos">
+                        Períodos letivos
+                    </button>
+                </li>
+            </ul>
+
+            <div id="secaoMatriculas">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h3 class="h5 fw-bold mb-3">Nova matrícula</h3>
+
+                        <form id="formMatricula">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label" for="alunoId">Aluno</label>
+                                    <select id="alunoId" class="form-select" required>
+                                        <option value="">Selecione o aluno</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label" for="turmaId">Turma</label>
+                                    <select id="turmaId" class="form-select" required>
+                                        <option value="">Selecione a turma</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label" for="dataInicio">Data de início</label>
+                                    <input id="dataInicio" class="form-control" type="date" required>
+                                </div>
+                            </div>
+
+                            <button id="salvarMatricula" class="btn btn-primary mt-3" type="submit">
+                                <i class="bi bi-plus-circle me-1"></i>Cadastrar matrícula
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                            <h3 class="h5 fw-bold mb-0">Histórico de matrículas</h3>
+                            <button id="atualizarMatriculas" class="btn btn-outline-primary btn-sm" type="button">
+                                <i class="bi bi-arrow-clockwise me-1"></i>Atualizar
+                            </button>
+                        </div>
+
+                        <input id="pesquisaMatricula" class="form-control mb-3" type="search" placeholder="Pesquisar aluno ou turma">
+
+                        <div class="table-responsive">
+                            <table class="table align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Aluno</th>
+                                        <th>Turma</th>
+                                        <th>Início</th>
+                                        <th>Fim</th>
+                                        <th>Status</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="listaMatriculas">
+                                    <tr><td colspan="6">Carregando...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="card">
-                <div class="card-body">
-                    <h3 class="h5 fw-bold mb-3">Histórico de matrículas</h3>
-                    <div class="empty-state">
-                        <i class="bi bi-journal-text fs-2 d-block mb-3"></i>
-                        Matrículas e transferências serão integradas à API.
+            <div id="secaoPeriodos" hidden>
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h3 id="tituloPeriodo" class="h5 fw-bold mb-3">Cadastrar período letivo</h3>
+
+                        <form id="formPeriodo">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label" for="nomePeriodo">Nome</label>
+                                    <input id="nomePeriodo" class="form-control" maxlength="100" required>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <label class="form-label" for="anoPeriodo">Ano letivo</label>
+                                    <input id="anoPeriodo" class="form-control" type="number" min="1" step="1" required>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <label class="form-label" for="semestrePeriodo">Semestre</label>
+                                    <select id="semestrePeriodo" class="form-select" required>
+                                        <option value="1">1º semestre</option>
+                                        <option value="2">2º semestre</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label" for="inicioPeriodo">Data de início</label>
+                                    <input id="inicioPeriodo" class="form-control" type="date" required>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label" for="fimPeriodo">Data de término</label>
+                                    <input id="fimPeriodo" class="form-control" type="date" required>
+                                </div>
+                            </div>
+
+                            <div class="d-flex gap-2 mt-3">
+                                <button id="salvarPeriodo" class="btn btn-primary" type="submit">Salvar período</button>
+                                <button id="cancelarPeriodo" class="btn btn-outline-secondary" type="button" hidden>Cancelar edição</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-body">
+                        <h3 class="h5 fw-bold mb-3">Períodos cadastrados</h3>
+
+                        <div class="table-responsive">
+                            <table class="table align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Nome</th>
+                                        <th>Ano</th>
+                                        <th>Semestre</th>
+                                        <th>Início</th>
+                                        <th>Fim</th>
+                                        <th>Situação</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="listaPeriodos">
+                                    <tr><td colspan="7">Carregando...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -40,5 +177,6 @@
     <script src="js/config.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/layout.js"></script>
+    <script src="js/gestao-escolar.js"></script>
 </body>
 </html>
