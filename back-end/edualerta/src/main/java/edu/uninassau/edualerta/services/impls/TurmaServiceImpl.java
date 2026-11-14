@@ -8,7 +8,9 @@ import edu.uninassau.edualerta.dtos.TurmaUpdateDto;
 import edu.uninassau.edualerta.models.Turma;
 import edu.uninassau.edualerta.repositorys.TurmaRepository;
 import edu.uninassau.edualerta.services.interfaces.TurmaServiceInterface;
+import java.time.Year;
 import java.util.List;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
@@ -26,6 +28,8 @@ public class TurmaServiceImpl implements TurmaServiceInterface {
   public TurmaResponseDto cadastrar(TurmaCadastroDto dto, Jwt jwt) {
 
     usuarioContext.getUsuario(jwt);
+
+    validarAnoLetivo(dto.getAnoLetivo());
 
     Turma turma = new Turma(dto.getNome().trim(), dto.getAnoLetivo());
 
@@ -62,6 +66,10 @@ public class TurmaServiceImpl implements TurmaServiceInterface {
 
     Turma turma = buscarTurma(id);
 
+    if (!Objects.equals(turma.getAnoLetivo(), dto.getAnoLetivo())) {
+      validarAnoLetivo(dto.getAnoLetivo());
+    }
+
     turma.setNome(dto.getNome().trim());
     turma.setAnoLetivo(dto.getAnoLetivo());
 
@@ -80,6 +88,16 @@ public class TurmaServiceImpl implements TurmaServiceInterface {
     return converterParaDto(turma);
   }
 
+  private void validarAnoLetivo(Integer anoLetivo) {
+
+    int anoAtual = Year.now().getValue();
+
+    if (anoLetivo < anoAtual) {
+      throw new IllegalArgumentException(
+          "O ano letivo da turma não pode ser anterior ao ano atual (" + anoAtual + ")");
+    }
+  }
+
   private Turma buscarTurma(Long id) {
 
     return turmaRepository.findById(id).orElseThrow(
@@ -92,3 +110,4 @@ public class TurmaServiceImpl implements TurmaServiceInterface {
                                 turma.getAnoLetivo(), turma.isAtivo());
   }
 }
+

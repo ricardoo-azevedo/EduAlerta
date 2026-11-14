@@ -1,4 +1,3 @@
-
 (async function () {
     const autorizado = await window.eduAlertaPaginaPronta;
 
@@ -44,6 +43,51 @@
         }
 
         return `${partes[2]}/${partes[1]}/${partes[0]}`;
+    }
+
+    function converterDataBRParaISO(valor) {
+        const correspondencia = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(valor);
+
+        if (!correspondencia) {
+            return null;
+        }
+
+        const dia = Number(correspondencia[1]);
+        const mes = Number(correspondencia[2]);
+        const ano = Number(correspondencia[3]);
+
+        if (mes < 1 || mes > 12 || dia < 1) {
+            return null;
+        }
+
+        const anoBissexto =
+            ano % 400 === 0 ||
+            (ano % 4 === 0 && ano % 100 !== 0);
+
+        const diasPorMes = [
+            31,
+            anoBissexto ? 29 : 28,
+            31,
+            30,
+            31,
+            30,
+            31,
+            31,
+            30,
+            31,
+            30,
+            31
+        ];
+
+        if (dia > diasPorMes[mes - 1]) {
+            return null;
+        }
+
+        const diaISO = String(dia).padStart(2, "0");
+        const mesISO = String(mes).padStart(2, "0");
+        const anoISO = String(ano).padStart(4, "0");
+
+        return `${anoISO}-${mesISO}-${diaISO}`;
     }
 
     function celula(valor) {
@@ -254,7 +298,7 @@
             salvar.disabled = true;
 
             try {
-                const sucesso = await executar(async () => {
+                await executar(async () => {
                     await api(
                         id === null
                             ? configuracao.caminho
@@ -269,10 +313,6 @@
                     ? "Cadastro realizado com sucesso."
                     : "Registro atualizado com sucesso."
                 );
-
-                if (!sucesso) {
-                    return;
-                }
             } finally {
                 salvar.disabled = false;
             }
@@ -444,16 +484,20 @@
     }
 
     async function encerrar(item) {
-        const dataFim = prompt(
-            `Informe a data de encerramento da matrícula de ${item.alunoNome} (AAAA-MM-DD):`
+        const dataInformada = prompt(
+            `Informe a data de fim da matrícula de ${item.alunoNome} (DD/MM/AAAA):`
         );
 
-        if (dataFim === null) {
+        if (dataInformada === null) {
             return;
         }
 
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(dataFim)) {
-            mensagem("Informe uma data no formato AAAA-MM-DD.");
+        const dataFim = converterDataBRParaISO(dataInformada.trim());
+
+        if (dataFim === null) {
+            mensagem(
+                "Data inválida. Informe uma data existente no formato DD/MM/AAAA."
+            );
             return;
         }
 
@@ -496,16 +540,22 @@
             return;
         }
 
-        const dataTransferencia = prompt(
-            "Informe a data da transferência (AAAA-MM-DD):"
+        const dataInformada = prompt(
+            "Informe a data da transferência (DD/MM/AAAA):"
         );
 
-        if (dataTransferencia === null) {
+        if (dataInformada === null) {
             return;
         }
 
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(dataTransferencia)) {
-            mensagem("Informe uma data no formato AAAA-MM-DD.");
+        const dataTransferencia = converterDataBRParaISO(
+            dataInformada.trim()
+        );
+
+        if (dataTransferencia === null) {
+            mensagem(
+                "Data inválida. Informe uma data existente no formato DD/MM/AAAA."
+            );
             return;
         }
 
