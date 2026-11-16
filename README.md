@@ -9,6 +9,16 @@ O EduAlerta é uma aplicação web voltada ao acompanhamento da frequência dos 
 
 ---
 
+## Integrantes do Projeto:
+- José Ricardo
+- Francileidy Conceição
+- Adrielly Kauany
+- Itamar Kauan
+- Pedro Cauã Vicente
+- Miguel Azevedo
+
+---
+
 ## 📌 Estado atual do desenvolvimento
 
 ### Implementado no backend
