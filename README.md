@@ -1,5 +1,5 @@
 # Atenção: 
-**Para avaliar o projeto em desenvolvimento, ele se encontra na branch develop**
+*Para acompanhar o projeto em estado de desenvolvimento, acesse a branch develop*
 
 # 🎓 EduAlerta
 
@@ -7,11 +7,11 @@
 
 O EduAlerta é uma aplicação web desenvolvida com o objetivo de auxiliar instituições de ensino no acompanhamento da frequência dos alunos, identificando possíveis situações de risco de evasão escolar.
 
-A plataforma permite organizar os dados escolares, gerenciar alunos, turmas, matrículas e períodos letivos e, nas próximas etapas, consolidar semanalmente as informações de frequência, acompanhar o percentual de faltas não justificadas e gerar alertas para auxiliar a instituição na identificação de alunos que necessitam de acompanhamento.
+A plataforma permite organizar os dados escolares, gerenciar alunos, turmas, matrículas e períodos letivos. O backend também já permite criar fechamentos semanais por turma, registrar a quantidade de aulas realizadas em cada dia e lançar faltas não justificadas e justificadas por matrícula. O cálculo acumulado de risco, a geração de alertas e o registro de intervenções permanecem como próximas etapas.
 
 O sistema busca utilizar a tecnologia como ferramenta de apoio à gestão escolar e à prevenção da evasão, facilitando a identificação antecipada de situações que exigem atenção e o registro das intervenções realizadas pela instituição.
 
-> 🚧 **Status:** Em desenvolvimento. O backend possui módulos funcionais de autenticação e autorização, gerenciamento de usuários, alunos, turmas, períodos letivos e matrículas. O frontend já está integrado a esses módulos. As funcionalidades de frequência, painel, alertas, acompanhamentos e relatórios ainda não possuem integração com a API.
+> 🚧 **Status:** Em desenvolvimento. O backend possui módulos funcionais de autenticação e gerenciamento escolar, além dos módulos de fechamento semanal e frequência por matrícula. O frontend continua integrado aos módulos de autenticação, usuários, alunos, turmas, matrículas e períodos letivos; a tela de frequência ainda não está integrada aos novos endpoints. Cálculo de risco, alertas, acompanhamentos e relatórios seguem pendentes.
 
 ---
 
@@ -45,6 +45,10 @@ O desenvolvimento do EduAlerta acontece de forma incremental. Esta seção apres
 - CRUD de períodos letivos, incluindo alteração de status e validação das datas.
 - Gerenciamento de matrículas, incluindo cadastro, consulta, encerramento e transferência entre turmas.
 - Tratamento centralizado de erros de validação, regras de negócio, acesso negado e recursos não encontrados.
+- Cadastro, consulta e fechamento de semanas por turma e período letivo.
+- Registro, edição e remoção da quantidade de aulas realizadas em cada dia da semana, inclusive zero aulas.
+- Registro, consulta, edição e remoção de frequência semanal por matrícula, separando faltas não justificadas e justificadas.
+- Validações de vínculo da matrícula com a turma e com o intervalo semanal, limites de faltas em relação às aulas realizadas e bloqueio de alterações após o fechamento.
 
 ### Implementado ou integrado no frontend
 
@@ -65,9 +69,7 @@ O desenvolvimento do EduAlerta acontece de forma incremental. Esta seção apres
 ### Ainda não implementado no backend
 
 - Cadastro e associação de responsáveis.
-- Fechamento semanal e diário de frequência.
-- Registro de faltas e faltas justificadas.
-- Cálculo do percentual de faltas.
+- Cálculo acumulado do percentual de faltas não justificadas por período letivo.
 - Geração e consulta de alertas.
 - Registro de acompanhamentos e intervenções.
 - Notificações e encaminhamentos.
@@ -102,8 +104,8 @@ A modelagem e o escopo funcional descritos nas próximas seções representam o 
 | Períodos letivos | Implementada | Cadastro, listagem, consulta por ID, edição e ativação/desativação. |
 | Matrículas | Implementada | Cadastro, listagem, consulta, histórico por aluno, encerramento e transferência. |
 | Responsáveis | Pendente | Cadastro e associação de responsáveis aos alunos. |
-| Fechamento semanal | Pendente | Consolidação das informações de frequência de uma turma por semana. |
-| Frequência semanal | Pendente | Registro de faltas e faltas justificadas por matrícula. |
+| Fechamento semanal | Implementada no backend | Criação, listagem, consulta, manutenção dos dias letivos e fechamento definitivo de uma semana por turma e período letivo. |
+| Frequência semanal | Implementada no backend | Registro, listagem, edição e remoção de faltas não justificadas e justificadas por matrícula, enquanto o fechamento estiver em rascunho. |
 | Monitoramento | Pendente | Cálculo do percentual acumulado de faltas não justificadas. |
 | Alertas | Pendente | Identificação e acompanhamento de situações de risco. |
 | Acompanhamentos | Pendente | Registro das intervenções realizadas pela instituição. |
@@ -618,19 +620,96 @@ O formato utilizado pelo `GlobalExceptionHandler` para os erros tratados é:
 
 A resposta de erro de autenticação produzida diretamente pelo Spring Security pode seguir o formato padrão do framework, não necessariamente o objeto `RestError`.
 
+### Fechamentos semanais — `/fechamentos-semanais`
+
+| Método | Endpoint | Descrição |
+|---|---|---|
+| `POST` | `/fechamentos-semanais` | Cria um fechamento semanal em status `RASCUNHO`. |
+| `GET` | `/fechamentos-semanais` | Lista fechamentos; aceita filtros opcionais `turmaId` e `periodoLetivoId`. |
+| `GET` | `/fechamentos-semanais/{id}` | Consulta um fechamento, incluindo os dias registrados. |
+| `POST` | `/fechamentos-semanais/{id}/dias` | Adiciona um dia e sua quantidade de aulas. |
+| `PUT` | `/fechamentos-semanais/{id}/dias/{diaId}` | Atualiza um dia do fechamento. |
+| `DELETE` | `/fechamentos-semanais/{id}/dias/{diaId}` | Remove um dia do fechamento. |
+| `PUT` | `/fechamentos-semanais/{id}/fechar` | Valida os registros e altera o status para `FECHADO`. |
+
+**POST `/fechamentos-semanais`**
+
+```json
+{
+  "turmaId": 1,
+  "periodoLetivoId": 1,
+  "dataInicioSemana": "2026-11-16"
+}
+```
+
+A data inicial deve ser uma segunda-feira. A data final é calculada pelo backend como seis dias depois. A semana precisa ter interseção com o período letivo informado, e não pode existir outro fechamento para a mesma turma, período e data inicial.
+
+**POST `/fechamentos-semanais/{id}/dias`** e **PUT `/fechamentos-semanais/{id}/dias/{diaId}`**
+
+```json
+{
+  "data": "2026-11-16",
+  "quantidadeAulas": 0
+}
+```
+
+A quantidade de aulas deve ser maior ou igual a zero. O valor zero é válido para dias sem aula. A data deve pertencer ao intervalo do fechamento e não pode ser repetida dentro da mesma semana.
+
+### Frequências semanais — `/fechamentos-semanais/{fechamentoId}/frequencias`
+
+| Método | Endpoint | Descrição |
+|---|---|---|
+| `POST` | `/fechamentos-semanais/{fechamentoId}/frequencias` | Registra a frequência de uma matrícula no fechamento. |
+| `GET` | `/fechamentos-semanais/{fechamentoId}/frequencias` | Lista as frequências do fechamento. |
+| `PUT` | `/fechamentos-semanais/{fechamentoId}/frequencias/{frequenciaId}` | Atualiza as quantidades de faltas. |
+| `DELETE` | `/fechamentos-semanais/{fechamentoId}/frequencias/{frequenciaId}` | Remove a frequência enquanto o fechamento estiver em rascunho. |
+
+**POST `/fechamentos-semanais/{fechamentoId}/frequencias`**
+
+```json
+{
+  "matriculaId": 1,
+  "faltas": 2,
+  "faltasJustificadas": 1
+}
+```
+
+**PUT `/fechamentos-semanais/{fechamentoId}/frequencias/{frequenciaId}`**
+
+```json
+{
+  "faltas": 1,
+  "faltasJustificadas": 2
+}
+```
+
+O registro é associado à matrícula, que determina o aluno e o vínculo com a turma. Cada matrícula pode possuir apenas um registro de frequência por fechamento.
+
+### Regras dos fechamentos e frequências implementadas
+
+- O fechamento é criado em `RASCUNHO` e só pode ser fechado depois de possuir ao menos um dia registrado.
+- A semana começa obrigatoriamente em uma segunda-feira e termina no domingo.
+- A turma e o período letivo precisam estar ativos no momento da criação.
+- Não pode haver dois fechamentos para a mesma turma, período letivo e semana.
+- Cada data pode aparecer uma única vez no mesmo fechamento.
+- A quantidade de aulas por dia aceita zero, mas não aceita valores negativos.
+- Só podem ser registradas frequências de matrículas vinculadas à turma do fechamento e com vínculo vigente em algum momento daquela semana.
+- Cada matrícula pode ter apenas uma frequência por fechamento.
+- Faltas e faltas justificadas são campos separados e não podem ser negativas.
+- A soma de faltas não justificadas e justificadas não pode ultrapassar o total de aulas realizadas durante o período em que a matrícula esteve vinculada à turma naquela semana.
+- Ao fechar a semana, o backend exige um registro de frequência para cada matrícula da turma cujo vínculo se sobreponha ao intervalo semanal e valida novamente os totais.
+- Depois de `FECHADO`, os dias e as frequências não podem ser incluídos, alterados ou removidos.
+- O fechamento registra o usuário autenticado que o criou.
+
 ### Endpoints ainda não implementados
 
 Os seguintes módulos não possuem controllers ou endpoints disponíveis no backend atual:
 
-- Responsáveis.
-- Fechamentos semanais.
-- Fechamentos diários.
-- Frequências semanais.
-- Monitoramento de frequência.
-- Alertas.
-- Acompanhamentos.
-- Notificações.
-- Encaminhamentos.
+- Responsáveis e associação entre responsáveis e alunos.
+- Cálculo acumulado do percentual de faltas não justificadas.
+- Geração, consulta e resolução de alertas.
+- Acompanhamentos e intervenções.
+- Notificações e encaminhamentos.
 - Dashboard e relatórios.
 
 ---
@@ -674,6 +753,19 @@ Esta seção reúne as validações e regras presentes nos módulos atualmente d
 - Transferência preserva o histórico, encerrando o vínculo anterior e criando outro.
 - O encerramento e a transferência respeitam a ordem cronológica das datas.
 
+### Fechamentos semanais e frequência
+
+- A semana é identificada pela segunda-feira como data inicial; a data final corresponde ao domingo.
+- O fechamento pertence a uma turma, a um período letivo e ao usuário que o criou.
+- O fechamento inicia em `RASCUNHO` e pode ser alterado apenas nesse estado.
+- Os dias são registrados individualmente, com quantidade de aulas maior ou igual a zero; portanto, dias sem aula podem ser registrados explicitamente com `quantidadeAulas: 0`.
+- O mesmo dia não pode ser cadastrado duas vezes no mesmo fechamento.
+- A frequência é vinculada à matrícula, não diretamente ao aluno, e separa `faltas` de `faltasJustificadas`.
+- A matrícula precisa pertencer à turma do fechamento e seu intervalo de vínculo precisa se sobrepor à semana.
+- A soma das duas categorias de faltas não pode exceder as aulas realizadas durante o intervalo em que a matrícula esteve vinculada naquela semana.
+- Para fechar a semana, todas as matrículas com vínculo sobreposto precisam possuir frequência registrada; os totais são validados novamente.
+- Um fechamento `FECHADO` torna-se imutável pelos endpoints de manutenção de dias e frequências.
+
 ### Usuários
 
 - Não existe cadastro público.
@@ -689,9 +781,9 @@ Esta seção reúne as validações e regras presentes nos módulos atualmente d
 
 ---
 
-## 🚨 Classificação de risco — regra prevista
+## 🚨 Classificação de risco — regra prevista, ainda não implementada
 
-A classificação de risco está definida como regra funcional do projeto, mas a rotina de cálculo e os endpoints correspondentes ainda não estão implementados no backend.
+A classificação de risco está definida como regra funcional do projeto, mas a rotina de cálculo acumulado e os endpoints correspondentes ainda não estão implementados no backend. O registro de fechamentos e frequências já existe; isso ainda não significa que o percentual e os alertas sejam calculados automaticamente.
 
 | Percentual de faltas não justificadas | Classificação |
 |---|---|
@@ -730,7 +822,7 @@ O resultado corresponde à classificação **Preventivo**.
 
 ---
 
-## 📅 Controle de frequência — modelagem prevista
+## 📅 Controle de frequência — implementação atual do backend
 
 O registro da frequência será realizado por meio de fechamentos semanais por turma.
 
@@ -749,7 +841,7 @@ O fechamento semanal reunirá as informações dos dias letivos e as frequência
 - Quantidade de faltas não justificadas.
 - Quantidade de faltas justificadas.
 
-Dias sem aulas, feriados e suspensões não deverão contribuir para a quantidade de aulas realizadas.
+Dias sem aulas, feriados e suspensões devem ser registrados com `quantidadeAulas: 0`; o backend não infere feriados nem cria automaticamente os registros diários.
 
 ### Status do fechamento
 
@@ -762,7 +854,7 @@ A separação entre fechamento e frequência permite consolidar as informações
 
 **Decisão de modelagem:** o sistema não utiliza uma entidade `AULA`. A quantidade de aulas realizadas será registrada por dia em `FECHAMENTO_DIA`, enquanto as faltas serão consolidadas por aluno em `FREQUENCIA_SEMANAL`.
 
-Essas estruturas ainda não possuem models JPA ou endpoints implementados no backend atual.
+As entidades `FechamentoSemanal`, `FechamentoDia` e `FrequenciaSemanal`, seus repositories, DTOs, services e controllers já estão implementados no backend. A tela `frequencias.html`, porém, ainda não está integrada a esses endpoints.
 
 ---
 
@@ -888,6 +980,9 @@ As entidades JPA presentes no backend documentado mapeiam as seguintes tabelas:
 | `app.tb_turma` | `Turma` | Nome, ano letivo e status da turma. |
 | `app.tb_periodo_letivo` | `PeriodoLetivo` | Nome, ano letivo, semestre, datas inicial/final e status. |
 | `app.tb_matricula` | `Matricula` | Vínculo entre aluno e turma, datas e status da matrícula. |
+| `app.tb_fechamento_semanal` | `FechamentoSemanal` | Fechamento semanal de uma turma em um período letivo, com usuário responsável e status. |
+| `app.tb_fechamento_dia` | `FechamentoDia` | Data e quantidade de aulas realizadas em cada dia do fechamento. |
+| `app.tb_frequencia_semanal` | `FrequenciaSemanal` | Faltas não justificadas e justificadas por matrícula e fechamento semanal. |
 
 **Observação sobre schemas:** a entidade `Usuario` está mapeada sem declaração explícita de schema na anotação `@Table`. As demais entidades acima declaram o schema `app` no código apresentado. A localização efetiva de `tb_usuario` também depende das propriedades de conexão e configuração JPA.
 
@@ -899,6 +994,12 @@ O diagrama abaixo representa os relacionamentos JPA implementados no backend atu
 erDiagram
     ALUNO ||--o{ MATRICULA : possui
     TURMA ||--o{ MATRICULA : recebe
+    TURMA ||--o{ FECHAMENTO_SEMANAL : possui
+    PERIODO_LETIVO ||--o{ FECHAMENTO_SEMANAL : organiza
+    USUARIO ||--o{ FECHAMENTO_SEMANAL : registra
+    FECHAMENTO_SEMANAL ||--o{ FECHAMENTO_DIA : detalha
+    FECHAMENTO_SEMANAL ||--o{ FREQUENCIA_SEMANAL : contem
+    MATRICULA ||--o{ FREQUENCIA_SEMANAL : recebe
 
     ALUNO {
         bigint id PK
@@ -922,6 +1023,31 @@ erDiagram
         date data_inicio
         date data_fim
         string status
+    }
+
+    FECHAMENTO_SEMANAL {
+        bigint id PK
+        bigint turma_id FK
+        bigint periodo_letivo_id FK
+        bigint usuario_id FK
+        date data_inicio_semana
+        date data_fim_semana
+        string status
+    }
+
+    FECHAMENTO_DIA {
+        bigint id PK
+        bigint fechamento_semanal_id FK
+        date data
+        int quantidade_aulas
+    }
+
+    FREQUENCIA_SEMANAL {
+        bigint id PK
+        bigint fechamento_semanal_id FK
+        bigint matricula_id FK
+        int faltas
+        int faltas_justificadas
     }
 
     USUARIO {
@@ -1113,9 +1239,6 @@ erDiagram
 
 | Entidade | Responsabilidade |
 |---|---|
-| `FECHAMENTO_SEMANAL` | Representa o fechamento de frequência de uma turma em determinada semana. |
-| `FECHAMENTO_DIA` | Armazena a quantidade de aulas realizadas em cada dia do fechamento. |
-| `FREQUENCIA_SEMANAL` | Registra as faltas e faltas justificadas dos alunos em determinado fechamento. |
 | `RESPONSAVEL` | Armazena os dados dos responsáveis pelos alunos. |
 | `ALUNO_RESPONSAVEL` | Relaciona alunos e responsáveis. |
 | `ALERTA` | Armazena situações de risco identificadas para os alunos. |
@@ -1245,7 +1368,7 @@ back-end/
     │   │   │           └── impls/
     │   │   └── resources/
     │   └── test/
-    ├── application.properties.example
+    ├── src/main/resources/application.properties.example
     ├── mvnw
     ├── mvnw.cmd
     └── pom.xml
@@ -1311,7 +1434,7 @@ cd EduAlerta/back-end/edualerta
 Copie o arquivo de exemplo:
 
 ```bash
-cp application.properties.example src/main/resources/application.properties
+cp src/main/resources/application.properties.example src/main/resources/application.properties
 ```
 
 Preencha as propriedades com os dados da sua instalação.
@@ -1330,7 +1453,7 @@ No Windows:
 
 O backend utiliza a porta `9000` na configuração atual.
 
-A aplicação depende de uma configuração válida do PostgreSQL e do Supabase para iniciar corretamente.
+A aplicação depende de uma configuração válida do PostgreSQL e do Supabase para iniciar corretamente. O Hibernate está configurado com `ddl-auto=validate`: as tabelas precisam existir no banco e corresponder ao mapeamento das entidades; a aplicação não cria nem atualiza automaticamente o schema.
 
 ### 3. Configure o frontend
 
@@ -1366,18 +1489,24 @@ A autenticação inicial depende de uma conta previamente provisionada no Supaba
 
 ---
 
+## 🧪 Testes e validação
+
+O projeto contém atualmente um teste automatizado de contexto (`contextLoads`). Ele verifica a inicialização do contexto Spring, mas não constitui uma suíte automatizada de testes das regras de negócio.
+
+Os módulos de fechamento semanal e frequência foram exercitados manualmente por requisições HTTP durante o desenvolvimento. Os registros de execução incluídos no ZIP mostram, entre outros cenários, a rejeição de dias duplicados, datas fora da semana, matrícula sem vínculo com a turma, quantidades negativas, faltas acima das aulas realizadas, ausência de frequência obrigatória no fechamento e tentativas de alteração após o fechamento. Esses logs demonstram testes manuais de validação, não testes automatizados reproduzíveis.
+
 ## 🧭 Próximas etapas do projeto
 
 Com base no estado atual do desenvolvimento e no escopo funcional, as próximas etapas incluem:
 
-1. Implementar o cadastro e a associação de responsáveis.
-2. Implementar o fechamento semanal e seus registros diários.
-3. Implementar os registros de frequência por matrícula.
-4. Implementar o cálculo acumulado de faltas por período letivo.
-5. Implementar a geração e consulta de alertas.
-6. Implementar o registro de acompanhamentos.
-7. Integrar o painel aos dados reais da API.
-8. Integrar as telas de frequência, alertas, acompanhamentos e relatórios aos endpoints que ainda serão desenvolvidos.
+1. Integrar a tela de frequência aos endpoints de fechamento semanal e frequência por matrícula.
+2. Implementar o cálculo acumulado de faltas não justificadas por período letivo.
+3. Implementar a geração, consulta e resolução de alertas.
+4. Implementar o cadastro e a associação de responsáveis, caso permaneçam no escopo da entrega.
+5. Implementar o registro de acompanhamentos e intervenções.
+6. Integrar o painel aos dados reais da API.
+7. Integrar as telas de alertas, acompanhamentos e relatórios aos módulos correspondentes.
+8. Ampliar os testes automatizados para regras de negócio e endpoints.
 9. Revisar a configuração de ambiente do frontend para separar a URL local da API da URL utilizada em publicação.
 
 ### Funcionalidades fora do escopo inicial
