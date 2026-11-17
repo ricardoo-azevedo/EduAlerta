@@ -1,3 +1,4 @@
+
 package edu.uninassau.edualerta.services.impls;
 
 import edu.uninassau.edualerta.config.security.UsuarioContext;
@@ -7,12 +8,16 @@ import edu.uninassau.edualerta.dtos.FechamentoSemanalCadastroDto;
 import edu.uninassau.edualerta.dtos.FechamentoSemanalResponseDto;
 import edu.uninassau.edualerta.models.FechamentoDia;
 import edu.uninassau.edualerta.models.FechamentoSemanal;
+import edu.uninassau.edualerta.models.FrequenciaSemanal;
+import edu.uninassau.edualerta.models.Matricula;
 import edu.uninassau.edualerta.models.PeriodoLetivo;
 import edu.uninassau.edualerta.models.StatusFechamento;
 import edu.uninassau.edualerta.models.Turma;
 import edu.uninassau.edualerta.models.Usuario;
 import edu.uninassau.edualerta.repositorys.FechamentoDiaRepository;
 import edu.uninassau.edualerta.repositorys.FechamentoSemanalRepository;
+import edu.uninassau.edualerta.repositorys.FrequenciaSemanalRepository;
+import edu.uninassau.edualerta.repositorys.MatriculaRepository;
 import edu.uninassau.edualerta.repositorys.PeriodoLetivoRepository;
 import edu.uninassau.edualerta.repositorys.TurmaRepository;
 import edu.uninassau.edualerta.services.interfaces.FechamentoSemanalServiceInterface;
@@ -33,6 +38,8 @@ public class FechamentoSemanalServiceImpl
 
   private final FechamentoSemanalRepository fechamentoSemanalRepository;
   private final FechamentoDiaRepository fechamentoDiaRepository;
+  private final FrequenciaSemanalRepository frequenciaSemanalRepository;
+  private final MatriculaRepository matriculaRepository;
   private final TurmaRepository turmaRepository;
   private final PeriodoLetivoRepository periodoLetivoRepository;
   private final UsuarioContext usuarioContext;
@@ -126,7 +133,6 @@ public class FechamentoSemanalServiceImpl
     validarDiaNoFechamento(fechamento, dto.getData());
 
     if (dto.getQuantidadeAulas() == null || dto.getQuantidadeAulas() < 0) {
-
       throw new IllegalArgumentException(
           "A quantidade de aulas não pode ser negativa");
     }
@@ -169,7 +175,6 @@ public class FechamentoSemanalServiceImpl
     validarDiaNoFechamento(fechamento, dto.getData());
 
     if (dto.getQuantidadeAulas() == null || dto.getQuantidadeAulas() < 0) {
-
       throw new IllegalArgumentException(
           "A quantidade de aulas não pode ser negativa");
     }
@@ -226,9 +231,68 @@ public class FechamentoSemanalServiceImpl
           "Não é possível fechar uma semana sem registrar nenhum dia");
     }
 
+    List<Matricula> matriculas =
+        matriculaRepository.findByTurmaAndPeriodoSobreposto(
+            fechamento.getTurma().getId(), fechamento.getDataInicioSemana(),
+            fechamento.getDataFimSemana());
+
+    for (Matricula matricula : matriculas) {
+
+      FrequenciaSemanal frequencia =
+          frequenciaSemanalRepository
+              .findByFechamentoSemanalIdAndMatriculaId(fechamentoId,
+                                                       matricula.getId())
+              .orElseThrow(
+                  ()
+                      -> new IllegalArgumentException(
+                          "A matrícula " + matricula.getId() +
+                          " ainda não possui registro de frequência"));
+
+      validarFrequenciaDoFechamento(fechamento, matricula, frequencia, dias);
+    }
+
     fechamento.setStatus(StatusFechamento.FECHADO);
 
     return converterParaDto(fechamento);
+  }
+
+  private void validarFrequenciaDoFechamento(FechamentoSemanal fechamento,
+                                             Matricula matricula,
+                                             FrequenciaSemanal frequencia,
+                                             List<FechamentoDia> dias) {
+
+    LocalDate inicio = fechamento.getDataInicioSemana();
+
+    if (matricula.getDataInicio().isAfter(inicio)) {
+      inicio = matricula.getDataInicio();
+    }
+
+    LocalDate fim = fechamento.getDataFimSemana();
+
+    if (matricula.getDataFim() != null &&
+        matricula.getDataFim().isBefore(fim)) {
+      fim = matricula.getDataFim();
+    }
+
+    final LocalDate dataInicioContagem = inicio;
+    final LocalDate dataFimContagem = fim;
+
+    long aulasRealizadas =
+        dias.stream()
+            .filter(dia
+                    -> !dia.getData().isBefore(dataInicioContagem) &&
+                           !dia.getData().isAfter(dataFimContagem))
+            .mapToLong(FechamentoDia::getQuantidadeAulas)
+            .sum();
+
+    long totalFaltas =
+        (long)frequencia.getFaltas() + frequencia.getFaltasJustificadas();
+
+    if (totalFaltas > aulasRealizadas) {
+      throw new IllegalArgumentException(
+          "A frequência da matrícula " + matricula.getId() +
+          " possui mais faltas do que aulas realizadas");
+    }
   }
 
   private FechamentoSemanal buscarFechamento(Long id) {

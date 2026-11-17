@@ -28,4 +28,17 @@ public interface MatriculaRepository extends JpaRepository<Matricula, Long> {
       @Param("dataInicio") LocalDate dataInicio,
       @Param("dataFim") LocalDate dataFim,
       @Param("matriculaId") Long matriculaId);
+
+  @Query("""
+      SELECT m
+      FROM Matricula m
+      WHERE m.turma.id = :turmaId
+        AND m.dataInicio <= :dataFim
+        AND (m.dataFim IS NULL OR m.dataFim >= :dataInicio)
+      ORDER BY m.id ASC
+      """)
+  List<Matricula> findByTurmaAndPeriodoSobreposto(
+      @Param("turmaId") Long turmaId,
+      @Param("dataInicio") LocalDate dataInicio,
+      @Param("dataFim") LocalDate dataFim);
 }
