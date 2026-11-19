@@ -1,19 +1,25 @@
 package edu.uninassau.edualerta.services.impls;
 
 import edu.uninassau.edualerta.config.security.UsuarioContext;
+import edu.uninassau.edualerta.dtos.FrequenciaAcumuladaResponseDto;
 import edu.uninassau.edualerta.dtos.MatriculaCadastroDto;
 import edu.uninassau.edualerta.dtos.MatriculaEncerramentoDto;
 import edu.uninassau.edualerta.dtos.MatriculaResponseDto;
 import edu.uninassau.edualerta.dtos.MatriculaTransferenciaDto;
 import edu.uninassau.edualerta.models.Aluno;
 import edu.uninassau.edualerta.models.Matricula;
+import edu.uninassau.edualerta.models.StatusFechamento;
 import edu.uninassau.edualerta.models.StatusMatricula;
 import edu.uninassau.edualerta.models.Turma;
 import edu.uninassau.edualerta.repositorys.AlunoRepository;
+import edu.uninassau.edualerta.repositorys.FechamentoDiaRepository;
+import edu.uninassau.edualerta.repositorys.FrequenciaSemanalRepository;
 import edu.uninassau.edualerta.repositorys.MatriculaRepository;
 import edu.uninassau.edualerta.repositorys.TurmaRepository;
 import edu.uninassau.edualerta.services.interfaces.MatriculaServiceInterface;
 import jakarta.persistence.EntityNotFoundException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +33,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class MatriculaServiceImpl implements MatriculaServiceInterface {
 
   private final MatriculaRepository matriculaRepository;
+  private final FrequenciaSemanalRepository frequenciaSemanalRepository;
+  private final FechamentoDiaRepository fechamentoDiaRepository;
   private final AlunoRepository alunoRepository;
   private final TurmaRepository turmaRepository;
   private final UsuarioContext usuarioContext;
@@ -90,8 +98,51 @@ public class MatriculaServiceImpl implements MatriculaServiceInterface {
   }
 
   @Override
+  @Transactional(readOnly = true)
+  public FrequenciaAcumuladaResponseDto calcularFrequenciaAcumulada(Long id,
+                                                                    Jwt jwt) {
+
+    usuarioContext.getUsuario(jwt);
+
+    Matricula matricula = buscarMatricula(id);
+
+    Long faltasNaoJustificadas =
+        frequenciaSemanalRepository.somarFaltasNaoJustificadasFechadas(
+            matricula.getId(), matricula.getTurma().getId(),
+            matricula.getDataInicio(), matricula.getDataFim(),
+            StatusFechamento.FECHADO);
+
+    Long aulasRealizadas =
+        fechamentoDiaRepository.somarAulasRealizadasEmFechamentosFechados(
+            matricula.getTurma().getId(), matricula.getDataInicio(),
+            matricula.getDataFim(), StatusFechamento.FECHADO);
+
+    if (faltasNaoJustificadas == null) {
+      faltasNaoJustificadas = 0L;
+    }
+
+    if (aulasRealizadas == null) {
+      aulasRealizadas = 0L;
+    }
+
+    BigDecimal percentual = BigDecimal.ZERO;
+
+    if (aulasRealizadas > 0) {
+      percentual = BigDecimal.valueOf(faltasNaoJustificadas)
+                       .multiply(BigDecimal.valueOf(100))
+                       .divide(BigDecimal.valueOf(aulasRealizadas), 2,
+                               RoundingMode.HALF_UP);
+    }
+
+    return new FrequenciaAcumuladaResponseDto(
+        matricula.getId(), matricula.getAluno().getId(),
+        matricula.getAluno().getNome(), faltasNaoJustificadas, aulasRealizadas,
+        percentual);
+  }
+
+  @Override
   public MatriculaResponseDto encerrar(Long id, MatriculaEncerramentoDto dto,
-      Jwt jwt) {
+                                       Jwt jwt) {
     usuarioContext.getUsuario(jwt);
 
     Matricula matriculaInicial = buscarMatricula(id);
@@ -110,7 +161,7 @@ public class MatriculaServiceImpl implements MatriculaServiceInterface {
     if (dataFim.isBefore(matricula.getDataInicio())) {
       throw new IllegalArgumentException(
           "A data de encerramento não pode ser anterior "
-              + "à data de início da matrícula");
+          + "à data de início da matrícula");
     }
 
     matricula.setDataFim(dataFim);
@@ -121,7 +172,7 @@ public class MatriculaServiceImpl implements MatriculaServiceInterface {
 
   @Override
   public MatriculaResponseDto transferir(Long id, MatriculaTransferenciaDto dto,
-      Jwt jwt) {
+                                         Jwt jwt) {
     usuarioContext.getUsuario(jwt);
 
     Matricula matriculaInicial = buscarMatricula(id);
@@ -140,7 +191,7 @@ public class MatriculaServiceImpl implements MatriculaServiceInterface {
     if (!dataTransferencia.isAfter(matriculaAtual.getDataInicio())) {
       throw new IllegalArgumentException(
           "A data da transferência deve ser posterior "
-              + "à data de início da matrícula atual");
+          + "à data de início da matrícula atual");
     }
 
     Turma turmaDestino = buscarTurma(dto.getTurmaId());
@@ -157,20 +208,21 @@ public class MatriculaServiceImpl implements MatriculaServiceInterface {
     LocalDate dataFimAnterior = dataTransferencia.minusDays(1);
 
     validarSobreposicao(aluno.getId(), dataTransferencia, null,
-        matriculaAtual.getId());
+                        matriculaAtual.getId());
 
     matriculaAtual.setDataFim(dataFimAnterior);
     matriculaAtual.setStatus(StatusMatricula.ENCERRADA);
 
     matriculaRepository.saveAndFlush(matriculaAtual);
 
-    Matricula novaMatricula = new Matricula(aluno, turmaDestino, dataTransferencia);
+    Matricula novaMatricula =
+        new Matricula(aluno, turmaDestino, dataTransferencia);
 
     return converterParaDto(matriculaRepository.save(novaMatricula));
   }
 
   private void validarSobreposicao(Long alunoId, LocalDate dataInicio,
-      LocalDate dataFim, Long matriculaId) {
+                                   LocalDate dataFim, Long matriculaId) {
     boolean existe = matriculaRepository.existeSobreposicao(
         alunoId, dataInicio, dataFim, matriculaId);
 

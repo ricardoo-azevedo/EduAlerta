@@ -1,5 +1,6 @@
 package edu.uninassau.edualerta.services.interfaces;
 
+import edu.uninassau.edualerta.dtos.FrequenciaAcumuladaResponseDto;
 import edu.uninassau.edualerta.dtos.MatriculaCadastroDto;
 import edu.uninassau.edualerta.dtos.MatriculaEncerramentoDto;
 import edu.uninassau.edualerta.dtos.MatriculaResponseDto;
@@ -17,8 +18,10 @@ public interface MatriculaServiceInterface {
 
   List<MatriculaResponseDto> listarPorAluno(Long alunoId, Jwt jwt);
 
+  FrequenciaAcumuladaResponseDto calcularFrequenciaAcumulada(Long id, Jwt jwt);
+
   MatriculaResponseDto encerrar(Long id, MatriculaEncerramentoDto dto, Jwt jwt);
 
   MatriculaResponseDto transferir(Long id, MatriculaTransferenciaDto dto,
-      Jwt jwt);
+                                  Jwt jwt);
 }
