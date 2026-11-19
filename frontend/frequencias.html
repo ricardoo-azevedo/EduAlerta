@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -13,54 +14,194 @@
     <div id="navegacao"></div>
 
     <main class="container page-shell">
-        <section id="frequencia">
+        <section>
             <div class="page-heading">
                 <h2><i class="bi bi-calendar-check me-2"></i>Fechamento Semanal de Frequência</h2>
-                <p>Consolide as aulas realizadas e as faltas dos alunos por semana e turma.</p>
+                <p>Gerencie as aulas realizadas e as faltas dos alunos por turma e semana.</p>
             </div>
 
-            <div class="status-note">
-                <i class="bi bi-plug me-2"></i>
-                Interface preparada para integração. Dados reais dependem dos endpoints da API.
-            </div>
+            <div id="mensagemFrequencia" role="status" aria-live="polite"></div>
 
-            <div class="row g-3 mb-4">
-                <div class="col-md-6">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h3 class="h5 fw-bold">
-                                <i class="bi bi-pencil-square me-2"></i>RASCUNHO
-                            </h3>
-                            <p class="text-secondary mb-0">
-                                Fechamento em elaboração. Não participa dos cálculos de frequência.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-6">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h3 class="h5 fw-bold">
-                                <i class="bi bi-check-circle me-2"></i>FECHADO
-                            </h3>
-                            <p class="text-secondary mb-0">
-                                Fechamento concluído. Participa dos cálculos do período letivo.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
+            <div class="card mb-4">
                 <div class="card-body">
-                    <h3 class="h5 fw-bold mb-3">Registros semanais</h3>
-                    <div class="empty-state">
-                        <i class="bi bi-calendar-week fs-2 d-block mb-3"></i>
-                        Fechamentos, aulas realizadas, faltas não justificadas e justificadas serão integrados à API.
+                    <h3 class="h5 fw-bold mb-3">Novo fechamento semanal</h3>
+
+                    <form id="formFechamento">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="turmaFechamento" class="form-label">Turma</label>
+                                <select id="turmaFechamento" class="form-select" required>
+                                    <option value="">Selecione a turma</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="periodoFechamento" class="form-label">Período letivo</label>
+                                <select id="periodoFechamento" class="form-select" required>
+                                    <option value="">Selecione o período</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="inicioSemana" class="form-label">Segunda-feira da semana</label>
+                                <input id="inicioSemana" type="date" class="form-control" required>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary mt-3">
+                            <i class="bi bi-plus-circle me-1"></i>Criar fechamento
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                        <h3 class="h5 fw-bold mb-0">Fechamentos cadastrados</h3>
+                        <button id="atualizarFechamentos" type="button" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-arrow-clockwise me-1"></i>Atualizar
+                        </button>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="filtroTurma" class="form-label">Filtrar turma</label>
+                            <select id="filtroTurma" class="form-select">
+                                <option value="">Todas as turmas</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="filtroPeriodo" class="form-label">Filtrar período</label>
+                            <select id="filtroPeriodo" class="form-select">
+                                <option value="">Todos os períodos</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Turma</th>
+                                    <th>Período</th>
+                                    <th>Semana</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="listaFechamentos">
+                                <tr><td colspan="5">Carregando...</td></tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
+
+            <section id="detalhesFechamento" hidden>
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                            <div>
+                                <h3 class="h5 fw-bold" id="tituloFechamento">Detalhes do fechamento</h3>
+                                <p id="resumoFechamento" class="text-secondary mb-2"></p>
+                                <span id="statusFechamento" class="badge text-bg-secondary"></span>
+                            </div>
+                            <button id="fecharSemana" type="button" class="btn btn-primary">
+                                <i class="bi bi-check-circle me-1"></i>Finalizar semana
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h3 class="h5 fw-bold mb-3">Aulas realizadas por dia</h3>
+
+                        <form id="formDia" class="row g-3 align-items-end mb-4">
+                            <div class="col-md-5">
+                                <label for="dataDia" class="form-label">Data</label>
+                                <input id="dataDia" type="date" class="form-control" required>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label for="quantidadeAulas" class="form-label">Quantidade de aulas</label>
+                                <input id="quantidadeAulas" type="number" min="0" step="1" class="form-control" required>
+                            </div>
+
+                            <div class="col-md-3">
+                                <button id="salvarDia" type="submit" class="btn btn-primary w-100">Salvar dia</button>
+                            </div>
+
+                            <div class="col-12">
+                                <button id="cancelarEdicaoDia" type="button" class="btn btn-outline-secondary btn-sm" hidden>Cancelar edição</button>
+                            </div>
+                        </form>
+
+                        <div class="table-responsive">
+                            <table class="table align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Aulas</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="listaDias"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h3 class="h5 fw-bold mb-3">Frequência dos alunos</h3>
+                        <p class="text-secondary">Registre as faltas não justificadas e justificadas de cada matrícula correspondente à semana.</p>
+
+                        <form id="formFrequencia" class="row g-3 align-items-end mb-4">
+                            <div class="col-md-4">
+                                <label for="matriculaFrequencia" class="form-label">Aluno / Matrícula</label>
+                                <select id="matriculaFrequencia" class="form-select" required>
+                                    <option value="">Selecione a matrícula</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label for="faltas" class="form-label">Faltas não justificadas</label>
+                                <input id="faltas" type="number" min="0" step="1" class="form-control" required>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label for="faltasJustificadas" class="form-label">Faltas justificadas</label>
+                                <input id="faltasJustificadas" type="number" min="0" step="1" class="form-control" required>
+                            </div>
+
+                            <div class="col-md-2">
+                                <button id="salvarFrequencia" type="submit" class="btn btn-primary w-100">Salvar</button>
+                            </div>
+
+                            <div class="col-12">
+                                <button id="cancelarEdicaoFrequencia" type="button" class="btn btn-outline-secondary btn-sm" hidden>Cancelar edição</button>
+                            </div>
+                        </form>
+
+                        <div class="table-responsive">
+                            <table class="table align-middle">
+                                <thead>
+                                    <tr>
+                                        <th>Aluno</th>
+                                        <th>Não justificadas</th>
+                                        <th>Justificadas</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="listaFrequencias"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </section>
     </main>
 
@@ -68,5 +209,6 @@
     <script src="js/config.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/layout.js"></script>
+    <script src="js/frequencias.js"></script>
 </body>
 </html>
