@@ -1,4 +1,3 @@
-
 package edu.uninassau.edualerta.services.impls;
 
 import edu.uninassau.edualerta.config.security.UsuarioContext;
@@ -20,6 +19,7 @@ import edu.uninassau.edualerta.repositorys.FrequenciaSemanalRepository;
 import edu.uninassau.edualerta.repositorys.MatriculaRepository;
 import edu.uninassau.edualerta.repositorys.PeriodoLetivoRepository;
 import edu.uninassau.edualerta.repositorys.TurmaRepository;
+import edu.uninassau.edualerta.services.interfaces.AlertaServiceInterface;
 import edu.uninassau.edualerta.services.interfaces.FechamentoSemanalServiceInterface;
 import jakarta.persistence.EntityNotFoundException;
 import java.time.DayOfWeek;
@@ -42,6 +42,7 @@ public class FechamentoSemanalServiceImpl
   private final MatriculaRepository matriculaRepository;
   private final TurmaRepository turmaRepository;
   private final PeriodoLetivoRepository periodoLetivoRepository;
+  private final AlertaServiceInterface alertaService;
   private final UsuarioContext usuarioContext;
 
   @Override
@@ -133,6 +134,7 @@ public class FechamentoSemanalServiceImpl
     validarDiaNoFechamento(fechamento, dto.getData());
 
     if (dto.getQuantidadeAulas() == null || dto.getQuantidadeAulas() < 0) {
+
       throw new IllegalArgumentException(
           "A quantidade de aulas não pode ser negativa");
     }
@@ -175,6 +177,7 @@ public class FechamentoSemanalServiceImpl
     validarDiaNoFechamento(fechamento, dto.getData());
 
     if (dto.getQuantidadeAulas() == null || dto.getQuantidadeAulas() < 0) {
+
       throw new IllegalArgumentException(
           "A quantidade de aulas não pode ser negativa");
     }
@@ -253,6 +256,22 @@ public class FechamentoSemanalServiceImpl
 
     fechamento.setStatus(StatusFechamento.FECHADO);
 
+    fechamentoSemanalRepository.saveAndFlush(fechamento);
+
+    List<Long> alunosIds =
+        frequenciaSemanalRepository
+            .findByFechamentoSemanalIdOrderByMatriculaIdAsc(fechamentoId)
+            .stream()
+            .map(frequencia -> frequencia.getMatricula().getAluno().getId())
+            .distinct()
+            .sorted()
+            .toList();
+
+    for (Long alunoId : alunosIds) {
+      alertaService.atualizarAlertaDoAluno(
+          alunoId, fechamento.getPeriodoLetivo().getId());
+    }
+
     return converterParaDto(fechamento);
   }
 
@@ -271,6 +290,7 @@ public class FechamentoSemanalServiceImpl
 
     if (matricula.getDataFim() != null &&
         matricula.getDataFim().isBefore(fim)) {
+
       fim = matricula.getDataFim();
     }
 

@@ -37,4 +37,20 @@ public interface FechamentoDiaRepository
       @Param("dataInicio") LocalDate dataInicio,
       @Param("dataFim") LocalDate dataFim,
       @Param("status") StatusFechamento status);
+
+  @Query("""
+      SELECT COALESCE(SUM(d.quantidadeAulas), 0L)
+      FROM Matricula m, FechamentoDia d
+      JOIN d.fechamentoSemanal fechamento
+      WHERE m.aluno.id = :alunoId
+        AND fechamento.turma.id = m.turma.id
+        AND fechamento.periodoLetivo.id = :periodoLetivoId
+        AND fechamento.status = :status
+        AND d.data >= m.dataInicio
+        AND (m.dataFim IS NULL OR d.data <= m.dataFim)
+      """)
+  Long somarAulasDoAlunoNoPeriodo(
+      @Param("alunoId") Long alunoId,
+      @Param("periodoLetivoId") Long periodoLetivoId,
+      @Param("status") StatusFechamento status);
 }
