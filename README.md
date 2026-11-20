@@ -4,11 +4,11 @@
 
 O EduAlerta é uma aplicação web desenvolvida com o objetivo de auxiliar instituições de ensino no acompanhamento da frequência dos alunos, identificando possíveis situações de risco de evasão escolar.
 
-A plataforma permite organizar os dados escolares, gerenciar alunos, turmas, matrículas e períodos letivos. O backend também já permite criar fechamentos semanais por turma, registrar a quantidade de aulas realizadas em cada dia e lançar faltas não justificadas e justificadas por matrícula. O cálculo acumulado de risco, a geração de alertas e o registro de intervenções permanecem como próximas etapas.
+A plataforma permite organizar os dados escolares, gerenciar alunos, turmas, matrículas e períodos letivos. O backend também permite criar e fechar semanas por turma, registrar aulas realizadas por dia, lançar faltas não justificadas e justificadas por matrícula e consultar o percentual acumulado de faltas não justificadas de uma matrícula. A geração de alertas, os acompanhamentos e os relatórios ainda estão em desenvolvimento.
 
 O sistema busca utilizar a tecnologia como ferramenta de apoio à gestão escolar e à prevenção da evasão, facilitando a identificação antecipada de situações que exigem atenção e o registro das intervenções realizadas pela instituição.
 
-> 🚧 **Status:** Em desenvolvimento. O backend possui módulos funcionais de autenticação e gerenciamento escolar, além dos módulos de fechamento semanal e frequência por matrícula. O frontend continua integrado aos módulos de autenticação, usuários, alunos, turmas, matrículas e períodos letivos; a tela de frequência ainda não está integrada aos novos endpoints. Cálculo de risco, alertas, acompanhamentos e relatórios seguem pendentes.
+> 🚧 **Status:** Em desenvolvimento. O backend possui autenticação, gerenciamento escolar, fechamento semanal, registro de frequência por matrícula e cálculo do percentual acumulado de faltas não justificadas. O frontend possui integração com autenticação, gestão escolar, usuários e fechamento/frequência semanal. A geração e gestão de alertas, acompanhamentos e relatórios ainda não foram implementadas.
 
 ---
 
@@ -46,6 +46,7 @@ O desenvolvimento do EduAlerta acontece de forma incremental. Esta seção apres
 - Registro, edição e remoção da quantidade de aulas realizadas em cada dia da semana, inclusive zero aulas.
 - Registro, consulta, edição e remoção de frequência semanal por matrícula, separando faltas não justificadas e justificadas.
 - Validações de vínculo da matrícula com a turma e com o intervalo semanal, limites de faltas em relação às aulas realizadas e bloqueio de alterações após o fechamento.
+- Consulta da frequência acumulada de uma matrícula, considerando somente faltas não justificadas e registros de fechamentos `FECHADO` dentro do intervalo da matrícula.
 
 ### Implementado ou integrado no frontend
 
@@ -61,13 +62,13 @@ O desenvolvimento do EduAlerta acontece de forma incremental. Esta seção apres
 - Gestão de turmas integrada à API: cadastro, listagem, pesquisa, edição e alteração de status.
 - Gestão de matrículas integrada à API: cadastro, listagem, pesquisa, encerramento e transferência.
 - Gestão de períodos letivos integrada à API: cadastro, listagem, edição e alteração de status.
+- Gestão de fechamentos semanais e frequências integrada à API: criação e consulta de fechamentos, registro/edição/remoção de dias, lançamento/edição/remoção de frequências e fechamento definitivo da semana.
 - Layout compartilhado com identificação do usuário, perfil, navegação entre páginas e encerramento da sessão.
 
 ### Ainda não implementado no backend
 
 - Cadastro e associação de responsáveis.
-- Cálculo acumulado do percentual de faltas não justificadas por período letivo.
-- Geração e consulta de alertas.
+- Geração, consulta e resolução de alertas a partir do percentual calculado.
 - Registro de acompanhamentos e intervenções.
 - Notificações e encaminhamentos.
 - Endpoints de dashboard e relatórios.
@@ -103,7 +104,8 @@ A modelagem e o escopo funcional descritos nas próximas seções representam o 
 | Responsáveis | Pendente | Cadastro e associação de responsáveis aos alunos. |
 | Fechamento semanal | Implementada no backend | Criação, listagem, consulta, manutenção dos dias letivos e fechamento definitivo de uma semana por turma e período letivo. |
 | Frequência semanal | Implementada no backend | Registro, listagem, edição e remoção de faltas não justificadas e justificadas por matrícula, enquanto o fechamento estiver em rascunho. |
-| Monitoramento | Pendente | Cálculo do percentual acumulado de faltas não justificadas. |
+| Frequência acumulada | Implementada no backend | Consulta do total de faltas não justificadas, aulas realizadas e percentual da matrícula. |
+| Classificação de risco | Regra definida, integração pendente | Faixas regular, preventivo e crítico podem ser aplicadas ao percentual, mas não há geração automática de alertas. |
 | Alertas | Pendente | Identificação e acompanhamento de situações de risco. |
 | Acompanhamentos | Pendente | Registro das intervenções realizadas pela instituição. |
 | Notificações | Pendente | Registro de notificações relacionadas aos alertas. |
@@ -120,7 +122,7 @@ A modelagem e o escopo funcional descritos nas próximas seções representam o 
 | Turmas (`turmas.html`) | Integrada | CRUD e alteração de status por meio de `/turmas`. |
 | Matrículas e períodos (`matriculas.html`) | Integrada | Cadastro, consulta, encerramento e transferência de matrículas; CRUD e status de períodos letivos. |
 | Painel (`painel.html`) | Apenas estrutura visual | Os indicadores exibem estado de espera e não consultam dados da API. |
-| Frequência (`frequencias.html`) | Apenas estrutura visual | Apresenta os conceitos de rascunho/fechado, mas não registra fechamentos nem frequências na API. |
+| Frequência (`frequencias.html`) | Integrada | Gerencia fechamentos semanais, dias/aulas e frequências por matrícula usando os endpoints da API. |
 | Alertas (`alertas.html`) | Apenas estrutura visual | Exibe as faixas de risco previstas, sem consultar alertas reais. |
 | Acompanhamentos (`acompanhamento.html`) | Apenas estrutura visual | Não registra intervenções nem notificações. |
 | Relatórios (`relatorios.html`) | Apenas estrutura visual | Não consulta nem consolida dados da API. |
@@ -197,6 +199,15 @@ Encerramento e transferência solicitam datas no formato `DD/MM/AAAA` e converte
 - A tela impede que a data final seja anterior à data inicial.
 - Listagem e alteração de status.
 
+**Frequência**
+
+- Consulta fechamentos com filtros por turma e período letivo.
+- Criação de fechamento semanal, com início em uma segunda-feira.
+- Consulta dos dias e das frequências registrados.
+- Inclusão, edição e remoção de dias e quantidades de aulas enquanto o fechamento está em rascunho.
+- Lançamento, edição e remoção de faltas não justificadas e justificadas por matrícula.
+- Fechamento definitivo da semana após as validações do backend.
+
 **Usuários**
 
 - Listagem de nome, e-mail, perfil, status e situação da troca de senha.
@@ -211,7 +222,7 @@ O material do projeto também contém uma implementação anterior de controle d
 
 Esse código não utiliza os endpoints atuais do EduAlerta e não representa a implementação integrada ao backend.
 
-As páginas atuais de frequência, alertas e relatórios não carregam esse fluxo como funcionalidade conectada à API.
+A página atual `frequencias.html` utiliza os endpoints novos de fechamento semanal e frequência. O código legado em `script.js` não representa esse fluxo integrado. As telas de alertas e relatórios ainda não consomem dados reais da API.
 
 A lógica legada utiliza um critério de alerta de frequência inferior a 75%, diferente da regra de risco definida para o EduAlerta, baseada no percentual de faltas não justificadas por período letivo, com faixas de 20% e 25%.
 
@@ -546,6 +557,7 @@ O código atual não impõe que o ano do período letivo seja o ano corrente ou 
 | `GET` | `/matriculas` | Lista as matrículas em ordem crescente de ID. |
 | `GET` | `/matriculas/{id}` | Consulta uma matrícula pelo ID. |
 | `GET` | `/matriculas/aluno/{alunoId}` | Lista o histórico de matrículas de um aluno, da mais recente para a mais antiga. |
+| `GET` | `/matriculas/{id}/frequencia-acumulada` | Calcula faltas não justificadas, aulas realizadas e percentual acumulado da matrícula. |
 | `PUT` | `/matriculas/{id}/encerramento` | Encerra uma matrícula ativa. |
 | `POST` | `/matriculas/{id}/transferencia` | Encerra a matrícula atual e cria outra na turma de destino. |
 
@@ -577,6 +589,25 @@ O código atual não impõe que o ano do período letivo seja o ano corrente ou 
   "dataTransferencia": "2026-07-01"
 }
 ```
+
+**GET `/matriculas/{id}/frequencia-acumulada`**
+
+Não recebe corpo. Retorna os totais utilizados no cálculo da frequência acumulada da matrícula.
+
+Exemplo de resposta:
+
+```json
+{
+  "matriculaId": 1,
+  "alunoId": 1,
+  "alunoNome": "Nome do Aluno",
+  "faltasNaoJustificadas": 12,
+  "aulasRealizadas": 80,
+  "percentualFaltas": 15.00
+}
+```
+
+O exemplo é ilustrativo. O cálculo considera somente faltas não justificadas de fechamentos `FECHADO` associados à turma da matrícula e dentro do intervalo do vínculo. As faltas justificadas não entram no numerador. As aulas realizadas são somadas a partir dos registros diários de fechamentos fechados no intervalo da matrícula. Quando não há aulas contabilizadas, o percentual retornado é zero.
 
 #### Regras implementadas para matrículas
 
@@ -703,7 +734,6 @@ O registro é associado à matrícula, que determina o aluno e o vínculo com a 
 Os seguintes módulos não possuem controllers ou endpoints disponíveis no backend atual:
 
 - Responsáveis e associação entre responsáveis e alunos.
-- Cálculo acumulado do percentual de faltas não justificadas.
 - Geração, consulta e resolução de alertas.
 - Acompanhamentos e intervenções.
 - Notificações e encaminhamentos.
@@ -778,9 +808,9 @@ Esta seção reúne as validações e regras presentes nos módulos atualmente d
 
 ---
 
-## 🚨 Classificação de risco — regra prevista, ainda não implementada
+## 🚨 Frequência acumulada e classificação de risco
 
-A classificação de risco está definida como regra funcional do projeto, mas a rotina de cálculo acumulado e os endpoints correspondentes ainda não estão implementados no backend. O registro de fechamentos e frequências já existe; isso ainda não significa que o percentual e os alertas sejam calculados automaticamente.
+O cálculo do percentual acumulado já está implementado no backend por meio de `GET /matriculas/{id}/frequencia-acumulada`. O endpoint retorna os totais e o percentual da matrícula. A geração automática de alertas e a persistência de uma classificação de risco ainda não estão implementadas.
 
 | Percentual de faltas não justificadas | Classificação |
 |---|---|
@@ -788,7 +818,7 @@ A classificação de risco está definida como regra funcional do projeto, mas a
 | De 20% até abaixo de 25% | Preventivo |
 | 25% ou mais | Crítico |
 
-O cálculo utilizará a seguinte fórmula:
+O cálculo implementado utiliza a seguinte fórmula:
 
 \[
 \text{Percentual de faltas} =
@@ -797,15 +827,17 @@ O cálculo utilizará a seguinte fórmula:
 \times 100
 \]
 
-### Regras previstas para o cálculo
+### Regras aplicadas pelo cálculo
 
 - Somente fechamentos semanais com status `FECHADO` serão considerados.
 - Fechamentos em `RASCUNHO` não entrarão no cálculo.
 - Faltas justificadas não serão contabilizadas no percentual.
 - O denominador corresponderá à quantidade de aulas efetivamente realizadas.
-- O cálculo considerará os registros acumulados durante o período letivo.
+- O cálculo considera as faltas não justificadas dos fechamentos da turma associados à matrícula e cujas semanas se sobreponham ao intervalo da matrícula.
+- As aulas realizadas são somadas pelos registros diários dos fechamentos da turma, considerando as datas dentro do intervalo da matrícula.
+- O endpoint não recebe `periodoLetivoId`: o recorte temporal é o intervalo da matrícula, e não um filtro explícito por período letivo.
 
-A classificação considera como referência a frequência mínima de 75% prevista na legislação educacional aplicável, sem substituir os critérios e procedimentos oficiais da instituição de ensino.
+As faixas acima representam a regra de negócio definida para o projeto. O endpoint atualmente retorna o percentual; a classificação e a criação de alertas ainda não são persistidas nem geradas automaticamente.
 
 ### Exemplo
 
@@ -819,11 +851,9 @@ O resultado corresponde à classificação **Preventivo**.
 
 ---
 
-## 📅 Controle de frequência — implementação atual do backend
+## 📅 Controle de frequência — implementação atual
 
-O registro da frequência será realizado por meio de fechamentos semanais por turma.
-
-O fechamento semanal reunirá as informações dos dias letivos e as frequências dos alunos vinculados às matrículas correspondentes.
+O registro da frequência é realizado por meio de fechamentos semanais por turma. O fechamento reúne as informações dos dias letivos e as frequências dos alunos vinculados às matrículas correspondentes. A interface web já consome esses endpoints.
 
 ### Informações previstas
 
@@ -847,11 +877,11 @@ Dias sem aulas, feriados e suspensões devem ser registrados com `quantidadeAula
 | `RASCUNHO` | Registro ainda não concluído. Não participa do cálculo de frequência. |
 | `FECHADO` | Registro concluído e considerado nos cálculos do período letivo. |
 
-A separação entre fechamento e frequência permite consolidar as informações sem precisar cadastrar individualmente cada aula ministrada.
+A separação entre fechamento e frequência permite consolidar as informações sem precisar cadastrar individualmente cada aula ministrada. O endpoint de frequência acumulada utiliza os fechamentos concluídos para calcular o percentual da matrícula.
 
 **Decisão de modelagem:** o sistema não utiliza uma entidade `AULA`. A quantidade de aulas realizadas será registrada por dia em `FECHAMENTO_DIA`, enquanto as faltas serão consolidadas por aluno em `FREQUENCIA_SEMANAL`.
 
-As entidades `FechamentoSemanal`, `FechamentoDia` e `FrequenciaSemanal`, seus repositories, DTOs, services e controllers já estão implementados no backend. A tela `frequencias.html`, porém, ainda não está integrada a esses endpoints.
+As entidades `FechamentoSemanal`, `FechamentoDia` e `FrequenciaSemanal`, seus repositories, DTOs, services e controllers estão implementados no backend. A tela `frequencias.html` também está integrada aos endpoints de fechamento e frequência.
 
 ---
 
@@ -1490,21 +1520,19 @@ A autenticação inicial depende de uma conta previamente provisionada no Supaba
 
 O projeto contém atualmente um teste automatizado de contexto (`contextLoads`). Ele verifica a inicialização do contexto Spring, mas não constitui uma suíte automatizada de testes das regras de negócio.
 
-Os módulos de fechamento semanal e frequência foram exercitados manualmente por requisições HTTP durante o desenvolvimento. Os registros de execução incluídos no ZIP mostram, entre outros cenários, a rejeição de dias duplicados, datas fora da semana, matrícula sem vínculo com a turma, quantidades negativas, faltas acima das aulas realizadas, ausência de frequência obrigatória no fechamento e tentativas de alteração após o fechamento. Esses logs demonstram testes manuais de validação, não testes automatizados reproduzíveis.
+Os módulos de fechamento semanal e frequência foram exercitados manualmente por requisições HTTP durante o desenvolvimento. Os logs incluídos no ZIP registram inicializações da aplicação e operações de desenvolvimento; eles não substituem uma suíte automatizada nem comprovam, isoladamente, todos os cenários de negócio. O endpoint de frequência acumulada também foi incluído na implementação atual e deve continuar sendo validado com dados de teste representativos.
 
 ## 🧭 Próximas etapas do projeto
 
 Com base no estado atual do desenvolvimento e no escopo funcional, as próximas etapas incluem:
 
-1. Integrar a tela de frequência aos endpoints de fechamento semanal e frequência por matrícula.
-2. Implementar o cálculo acumulado de faltas não justificadas por período letivo.
-3. Implementar a geração, consulta e resolução de alertas.
-4. Implementar o cadastro e a associação de responsáveis, caso permaneçam no escopo da entrega.
-5. Implementar o registro de acompanhamentos e intervenções.
-6. Integrar o painel aos dados reais da API.
-7. Integrar as telas de alertas, acompanhamentos e relatórios aos módulos correspondentes.
-8. Ampliar os testes automatizados para regras de negócio e endpoints.
-9. Revisar a configuração de ambiente do frontend para separar a URL local da API da URL utilizada em publicação.
+1. Implementar a geração, consulta e resolução de alertas a partir do percentual acumulado.
+2. Implementar o cadastro e a associação de responsáveis, caso permaneçam no escopo da entrega.
+3. Implementar o registro de acompanhamentos e intervenções.
+4. Integrar o painel aos dados reais da API.
+5. Integrar as telas de alertas, acompanhamentos e relatórios aos módulos correspondentes.
+6. Ampliar os testes automatizados para regras de negócio e endpoints.
+7. Revisar a configuração de ambiente do frontend para separar a URL local da API da URL utilizada em publicação.
 
 ### Funcionalidades fora do escopo inicial
 
