@@ -48,6 +48,13 @@ public class Alerta {
   @Column(nullable = false, length = 20)
   private NivelAlerta nivel;
 
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false, length = 20)
+  private SituacaoAlerta situacao;
+
+  @Column(name = "resolvido_manualmente", nullable = false)
+  private boolean resolvidoManualmente;
+
   @Column(nullable = false, length = 500) private String motivo;
 
   @Column(name = "atualizado_em", nullable = false)
@@ -55,10 +62,13 @@ public class Alerta {
 
   public Alerta(Aluno aluno, PeriodoLetivo periodoLetivo,
                 BigDecimal percentualFaltas, NivelAlerta nivel, String motivo) {
+
     this.aluno = aluno;
     this.periodoLetivo = periodoLetivo;
     this.percentualFaltas = percentualFaltas;
     this.nivel = nivel;
+    this.situacao = SituacaoAlerta.ATIVO;
+    this.resolvidoManualmente = false;
     this.motivo = motivo;
     this.atualizadoEm = LocalDateTime.now();
   }

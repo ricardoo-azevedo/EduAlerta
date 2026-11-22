@@ -1,6 +1,8 @@
 package edu.uninassau.edualerta.repositorys;
 
 import edu.uninassau.edualerta.models.Alerta;
+import edu.uninassau.edualerta.models.NivelAlerta;
+import edu.uninassau.edualerta.models.SituacaoAlerta;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -20,13 +22,13 @@ public interface AlertaRepository extends JpaRepository<Alerta, Long> {
       WHERE (:alunoId IS NULL OR a.aluno.id = :alunoId)
         AND (:periodoLetivoId IS NULL OR
              a.periodoLetivo.id = :periodoLetivoId)
+        AND (:nivel IS NULL OR a.nivel = :nivel)
+        AND (:situacao IS NULL OR a.situacao = :situacao)
       ORDER BY a.periodoLetivo.id DESC, a.nivel DESC, a.aluno.nome ASC
       """)
   List<Alerta> listarComFiltros(
       @Param("alunoId") Long alunoId,
-      @Param("periodoLetivoId") Long periodoLetivoId);
-
-  void deleteByAlunoIdAndPeriodoLetivoId(
-      Long alunoId,
-      Long periodoLetivoId);
+      @Param("periodoLetivoId") Long periodoLetivoId,
+      @Param("nivel") NivelAlerta nivel,
+      @Param("situacao") SituacaoAlerta situacao);
 }
