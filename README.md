@@ -6,11 +6,11 @@ O EduAlerta é uma aplicação web desenvolvida com o objetivo de auxiliar insti
 
 A plataforma permite organizar os dados escolares, gerenciar alunos, turmas, matrículas e períodos letivos. O backend também permite criar e fechar semanas por turma, registrar aulas realizadas por dia, lançar faltas não justificadas e justificadas por matrícula, consultar a frequência acumulada de uma matrícula e gerar ou atualizar automaticamente alertas por aluno e período letivo quando um fechamento semanal é concluído.
 
-A consulta de alertas já está disponível na API. Acompanhamentos, notificações e relatórios permanecem em desenvolvimento.
+A consulta e a resolução manual de alertas já estão disponíveis na API. Acompanhamentos, notificações e relatórios permanecem em desenvolvimento.
 
 O sistema busca utilizar a tecnologia como ferramenta de apoio à gestão escolar e à prevenção da evasão, facilitando a identificação antecipada de situações que exigem atenção e o registro das intervenções realizadas pela instituição.
 
-> 🚧 **Status: Em desenvolvimento.** O backend possui autenticação, gerenciamento escolar, fechamento semanal, frequência por matrícula, cálculo percentual e geração/atualização automática de alertas. O frontend possui integração com autenticação, gestão escolar, usuários e fechamento/frequência semanal. A tela de alertas ainda não está integrada à API; acompanhamentos, notificações e relatórios ainda não foram implementados.
+> 🚧 **Status: Em desenvolvimento.** O backend possui autenticação, gerenciamento escolar, fechamento semanal, frequência por matrícula, cálculo percentual, geração/atualização automática e resolução manual de alertas. O frontend possui integração com autenticação, gestão escolar, usuários e fechamento/frequência semanal. A tela de alertas ainda não está integrada à API; acompanhamentos, notificações e relatórios ainda não foram implementados.
 
 ---
 
@@ -51,7 +51,8 @@ O desenvolvimento do EduAlerta acontece de forma incremental. Esta seção apres
 - Consulta da frequência acumulada de uma matrícula, considerando somente faltas não justificadas e registros de fechamentos `FECHADO` dentro do intervalo da matrícula.
 - Cálculo do percentual de faltas não justificadas por aluno e período letivo.
 - Geração e atualização automática de alertas ao fechar uma semana.
-- Consulta de alertas com filtros opcionais por aluno e período letivo.
+- Consulta de alertas com filtros opcionais por aluno, período letivo, nível e situação.
+- Resolução manual de alertas por meio de `PUT /alertas/{id}/resolver`, disponível para `ADM` e `SECRETARIA`.
 
 ### Implementado ou integrado no frontend
 
@@ -76,7 +77,7 @@ O desenvolvimento do EduAlerta acontece de forma incremental. Esta seção apres
 - Registro de acompanhamentos e intervenções.
 - Notificações e encaminhamentos.
 - Endpoints de dashboard e relatórios.
-- Resolução manual de alertas por meio de acompanhamento. Atualmente, a permanência do alerta é determinada automaticamente pelo percentual calculado.
+- Associação dos alertas resolvidos a registros de acompanhamento, quando esse módulo for implementado.
 
 As seções seguintes distinguem as funcionalidades já disponíveis na API daquelas que permanecem apenas previstas na modelagem ou no escopo futuro.
 
@@ -111,7 +112,7 @@ As seções seguintes distinguem as funcionalidades já disponíveis na API daqu
 | Frequência semanal | Implementada | Registro, listagem, edição e remoção de faltas não justificadas e justificadas por matrícula, enquanto o fechamento estiver em rascunho. |
 | Frequência acumulada | Implementada | Consulta do total de faltas não justificadas, aulas realizadas e percentual da matrícula. |
 | Classificação de risco | Implementada | Classificação automática por aluno e período letivo. |
-| Alertas | Implementada | Geração/atualização automática ao fechar semanas e consulta por `GET /alertas`, com filtros opcionais. |
+| Alertas | Implementada | Geração/atualização automática ao fechar semanas, consulta por `GET /alertas` com filtros por aluno, período, nível e situação, e resolução manual por `PUT /alertas/{id}/resolver`. |
 | Acompanhamentos | Pendente | Registro das intervenções realizadas pela instituição. |
 | Notificações | Pendente | Registro de notificações relacionadas aos alertas. |
 | Encaminhamentos | Opcional | Registro de possíveis encaminhamentos relacionados aos alertas. |
@@ -725,7 +726,8 @@ O registro é associado à matrícula, que determina o aluno e o vínculo com a 
 
 | Método | Endpoint | Descrição |
 |---|---|---|
-| `GET` | `/alertas` | Lista os alertas existentes. Aceita os filtros opcionais `alunoId` e `periodoLetivoId`. |
+| `GET` | `/alertas` | Lista os alertas existentes. Aceita os filtros opcionais `alunoId`, `periodoLetivoId`, `nivel` e `situacao`. |
+| `PUT` | `/alertas/{id}/resolver` | Marca um alerta como `RESOLVIDO` manualmente. Disponível para `ADM` e `SECRETARIA`. |
 
 Exemplos de consulta:
 
@@ -734,11 +736,13 @@ GET /alertas
 GET /alertas?alunoId=1
 GET /alertas?periodoLetivoId=2
 GET /alertas?alunoId=1&periodoLetivoId=2
+GET /alertas?nivel=CRITICO&situacao=ATIVO
+GET /alertas?alunoId=1&nivel=PREVENTIVO&situacao=RESOLVIDO
 ```
 
-O endpoint exige autenticação JWT e retorna os dados do alerta, incluindo aluno, período letivo, percentual, nível, motivo e data da última atualização.
+O endpoint exige autenticação JWT e retorna os dados do alerta, incluindo aluno, período letivo, percentual, nível, situação, motivo e data da última atualização. Os valores aceitos para `nivel` são `PREVENTIVO` e `CRITICO`; para `situacao`, `ATIVO` e `RESOLVIDO`.
 
-Não existem endpoints de cadastro, edição ou exclusão manual de alertas. A geração e a atualização são realizadas pelo backend durante o fechamento semanal.
+A resolução manual é realizada por `PUT /alertas/{id}/resolver`, sem corpo de requisição. O endpoint marca o alerta como `RESOLVIDO` e registra internamente que a resolução foi manual. Um alerta já resolvido não pode ser resolvido novamente. Não existem endpoints de cadastro, edição ou exclusão manual de alertas; a criação e a atualização dos dados de frequência/risco continuam sendo realizadas automaticamente durante o fechamento semanal.
 
 ### Endpoints ainda não implementados
 
@@ -836,7 +840,7 @@ Regras aplicadas:
 - Para os alertas, as aulas realizadas são somadas a partir dos registros diários dos fechamentos do período letivo, considerando a relação entre aluno, matrícula, turma e período.
 - O percentual é calculado com duas casas decimais e arredondamento `HALF_UP`; a classificação considera o percentual arredondado utilizado pelo serviço.
 
-A geração e a atualização dos alertas são executadas automaticamente ao fechar uma semana. Quando o percentual deixa de alcançar a faixa de risco, o alerta correspondente é removido. Quando permanece em uma faixa de risco, o registro existente é atualizado, sem duplicação.
+A geração e a atualização dos alertas são executadas automaticamente ao fechar uma semana. Quando o percentual fica abaixo de 20%, o alerta existente passa para a situação `RESOLVIDO`, em vez de ser excluído. Quando permanece em uma faixa de risco, os dados do alerta são atualizados, sem duplicação. Se o alerta tiver sido resolvido manualmente e o percentual continuar em uma faixa de risco, o recálculo automático atualiza seus dados, mas preserva a situação `RESOLVIDO`; se o percentual ficar abaixo de 20%, a resolução deixa de ser considerada manual.
 
 ### Usuários
 
@@ -897,16 +901,15 @@ A geração e a atualização de alertas estão implementadas no backend. Cada a
 2. O backend valida os dias e as frequências registradas.
 3. O fechamento passa para `FECHADO`.
 4. Para cada aluno que possui frequência registrada naquele fechamento, o serviço recalcula o percentual acumulado no período letivo.
-5. O serviço cria, atualiza ou remove o alerta correspondente conforme o resultado do cálculo.
+5. O serviço cria ou atualiza o alerta quando o percentual permanece em uma faixa de risco. Quando o percentual fica abaixo de 20%, um alerta existente passa para `RESOLVIDO`.
 
-Quando um alerta existente permanece em uma faixa de risco, o mesmo registro é atualizado, sem duplicação. Se o alerta for removido e o aluno voltar a atingir uma faixa de risco em um fechamento posterior, um novo registro poderá ser criado com outro ID.
+Quando um alerta permanece em uma faixa de risco, o mesmo registro é atualizado, sem duplicação. A resolução manual também está disponível pelo endpoint `PUT /alertas/{id}/resolver`. Alertas resolvidos manualmente permanecem resolvidos enquanto o percentual continuar em uma faixa de risco; a situação pode voltar a ser determinada automaticamente quando o percentual ficar abaixo de 20%.
 
-O alerta armazena o aluno, o período letivo, o percentual, o nível, o motivo descritivo e a data/hora da última atualização. A consulta é disponibilizada por `GET /alertas`, com filtros opcionais por aluno e período letivo.
+O alerta armazena o aluno, o período letivo, o percentual, o nível, a situação, o motivo descritivo e a data/hora da última atualização. A consulta é disponibilizada por `GET /alertas`, com filtros opcionais por aluno, período letivo, nível e situação.
 
 ### Ainda pendente
 
-- Acompanhamentos e intervenções realizados pela instituição.
-- Resolução manual de alertas por meio do registro de uma intervenção.
+- Acompanhamentos e intervenções realizados pela instituição, com associação formal ao alerta resolvido.
 - Notificações relacionadas aos alertas.
 - Encaminhamentos, previstos como funcionalidade opcional.
 
