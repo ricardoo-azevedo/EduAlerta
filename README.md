@@ -4,13 +4,15 @@
 
 O EduAlerta é uma aplicação web desenvolvida com o objetivo de auxiliar instituições de ensino no acompanhamento da frequência dos alunos, identificando possíveis situações de risco de evasão escolar.
 
-A plataforma permite organizar os dados escolares, gerenciar alunos, turmas, matrículas e períodos letivos. O backend também permite criar e fechar semanas por turma, registrar aulas realizadas por dia, lançar faltas não justificadas e justificadas por matrícula, consultar a frequência acumulada de uma matrícula e gerar/atualizar automaticamente alertas por aluno e período letivo quando um fechamento semanal é concluído. A consulta de alertas já está disponível na API; acompanhamentos, notificações e relatórios permanecem em desenvolvimento.
+A plataforma permite organizar os dados escolares, gerenciar alunos, turmas, matrículas e períodos letivos. O backend também permite criar e fechar semanas por turma, registrar aulas realizadas por dia, lançar faltas não justificadas e justificadas por matrícula, consultar a frequência acumulada de uma matrícula e gerar ou atualizar automaticamente alertas por aluno e período letivo quando um fechamento semanal é concluído.
+
+A consulta de alertas já está disponível na API. Acompanhamentos, notificações e relatórios permanecem em desenvolvimento.
 
 O sistema busca utilizar a tecnologia como ferramenta de apoio à gestão escolar e à prevenção da evasão, facilitando a identificação antecipada de situações que exigem atenção e o registro das intervenções realizadas pela instituição.
 
-> 🚧 **Status:** Em desenvolvimento. O backend possui autenticação, gerenciamento escolar, fechamento semanal, frequência por matrícula, cálculo percentual e geração/atualização automática de alertas por aluno e período letivo, com endpoint de consulta e filtros. O frontend possui integração com autenticação, gestão escolar, usuários e fechamento/frequência semanal. A tela de alertas ainda não está integrada à API; acompanhamentos, notificações e relatórios ainda não foram implementados.
+> 🚧 **Status: Em desenvolvimento.** O backend possui autenticação, gerenciamento escolar, fechamento semanal, frequência por matrícula, cálculo percentual e geração/atualização automática de alertas. O frontend possui integração com autenticação, gestão escolar, usuários e fechamento/frequência semanal. A tela de alertas ainda não está integrada à API; acompanhamentos, notificações e relatórios ainda não foram implementados.
 
-------------------------------------------------------------------------
+---
 
 ## 👥 Integrantes do projeto
 
@@ -21,11 +23,11 @@ O sistema busca utilizar a tecnologia como ferramenta de apoio à gestão escola
 - Pedro Cauã Vicente
 - Miguel Azevedo
 
-------------------------------------------------------------------------
+---
 
 ## 📌 Estado atual do desenvolvimento
 
-O desenvolvimento do EduAlerta acontece de forma incremental. Esta seção apresenta o estado real dos módulos considerando o backend e o frontend disponíveis no projeto.
+O desenvolvimento do EduAlerta acontece de forma incremental. Esta seção apresenta o estado dos módulos considerando o backend e o frontend disponíveis no projeto.
 
 ### Implementado no backend
 
@@ -47,9 +49,8 @@ O desenvolvimento do EduAlerta acontece de forma incremental. Esta seção apres
 - Registro, consulta, edição e remoção de frequência semanal por matrícula, separando faltas não justificadas e justificadas.
 - Validações de vínculo da matrícula com a turma e com o intervalo semanal, limites de faltas em relação às aulas realizadas e bloqueio de alterações após o fechamento.
 - Consulta da frequência acumulada de uma matrícula, considerando somente faltas não justificadas e registros de fechamentos `FECHADO` dentro do intervalo da matrícula.
-- Cálculo do percentual de faltas não justificadas por aluno e período letivo, considerando somente fechamentos `FECHADO`.
-- Geração e atualização automática de alertas ao fechar uma semana, com classificação `PREVENTIVO` ou `CRITICO`.
-- Remoção do alerta quando o percentual acumulado fica abaixo de 20%.
+- Cálculo do percentual de faltas não justificadas por aluno e período letivo.
+- Geração e atualização automática de alertas ao fechar uma semana.
 - Consulta de alertas com filtros opcionais por aluno e período letivo.
 
 ### Implementado ou integrado no frontend
@@ -75,11 +76,11 @@ O desenvolvimento do EduAlerta acontece de forma incremental. Esta seção apres
 - Registro de acompanhamentos e intervenções.
 - Notificações e encaminhamentos.
 - Endpoints de dashboard e relatórios.
-- Resolução manual de alertas por meio de acompanhamento; atualmente, a permanência do alerta é determinada automaticamente pelo percentual calculado.
+- Resolução manual de alertas por meio de acompanhamento. Atualmente, a permanência do alerta é determinada automaticamente pelo percentual calculado.
 
 As seções seguintes distinguem as funcionalidades já disponíveis na API daquelas que permanecem apenas previstas na modelagem ou no escopo futuro.
 
-------------------------------------------------------------------------
+---
 
 ## 🎯 Objetivos
 
@@ -97,41 +98,41 @@ As seções seguintes distinguem as funcionalidades já disponíveis na API daqu
 
 ## ⚙️ Funcionalidades e situação
 
-| Funcionalidade         | Situação no backend     | Descrição                                                                                                                                   |
-|------------------------|-------------------------|---------------------------------------------------------------------------------------------------------------------------------------------|
-| Autenticação           | Implementada            | Supabase Auth e validação de JWT pelo Spring Security.                                                                                      |
-| Gestão de usuários     | Implementada            | Cadastro de secretarias, consulta, alteração de nome e alteração de status.                                                                 |
-| Gestão de alunos       | Implementada            | Cadastro, listagem, consulta por ID, edição e ativação/desativação.                                                                         |
-| Gestão de turmas       | Implementada            | Cadastro, listagem, consulta por ID, edição e ativação/desativação.                                                                         |
-| Períodos letivos       | Implementada            | Cadastro, listagem, consulta por ID, edição e ativação/desativação.                                                                         |
-| Matrículas             | Implementada            | Cadastro, listagem, consulta, histórico por aluno, encerramento e transferência.                                                            |
-| Responsáveis           | Pendente                | Cadastro e associação de responsáveis aos alunos.                                                                                           |
-| Fechamento semanal     | Implementada no backend | Criação, listagem, consulta, manutenção dos dias letivos e fechamento definitivo de uma semana por turma e período letivo.                  |
-| Frequência semanal     | Implementada no backend | Registro, listagem, edição e remoção de faltas não justificadas e justificadas por matrícula, enquanto o fechamento estiver em rascunho.    |
-| Frequência acumulada   | Implementada no backend | Consulta do total de faltas não justificadas, aulas realizadas e percentual da matrícula.                                                   |
-| Classificação de risco | Implementada no backend | Classificação automática por aluno e período letivo: abaixo de 20% regular; de 20% até abaixo de 25% preventivo; 25% ou mais crítico.       |
-| Alertas                | Implementada no backend | Geração/atualização automática ao fechar semanas e consulta por `GET /alertas`, com filtros opcionais. Alertas abaixo de 20% são removidos. |
-| Acompanhamentos        | Pendente                | Registro das intervenções realizadas pela instituição.                                                                                      |
-| Notificações           | Pendente                | Registro de notificações relacionadas aos alertas.                                                                                          |
-| Encaminhamentos        | Opcional                | Registro de possíveis encaminhamentos relacionados aos alertas.                                                                             |
+| Funcionalidade | Situação no backend | Descrição |
+|---|---|---|
+| Autenticação | Implementada | Supabase Auth e validação de JWT pelo Spring Security. |
+| Gestão de usuários | Implementada | Cadastro de secretarias, consulta, alteração de nome e alteração de status. |
+| Gestão de alunos | Implementada | Cadastro, listagem, consulta por ID, edição e ativação/desativação. |
+| Gestão de turmas | Implementada | Cadastro, listagem, consulta por ID, edição e ativação/desativação. |
+| Períodos letivos | Implementada | Cadastro, listagem, consulta por ID, edição e ativação/desativação. |
+| Matrículas | Implementada | Cadastro, listagem, consulta, histórico por aluno, encerramento e transferência. |
+| Responsáveis | Pendente | Cadastro e associação de responsáveis aos alunos. |
+| Fechamento semanal | Implementada | Criação, listagem, consulta, manutenção dos dias letivos e fechamento definitivo de uma semana por turma e período letivo. |
+| Frequência semanal | Implementada | Registro, listagem, edição e remoção de faltas não justificadas e justificadas por matrícula, enquanto o fechamento estiver em rascunho. |
+| Frequência acumulada | Implementada | Consulta do total de faltas não justificadas, aulas realizadas e percentual da matrícula. |
+| Classificação de risco | Implementada | Classificação automática por aluno e período letivo. |
+| Alertas | Implementada | Geração/atualização automática ao fechar semanas e consulta por `GET /alertas`, com filtros opcionais. |
+| Acompanhamentos | Pendente | Registro das intervenções realizadas pela instituição. |
+| Notificações | Pendente | Registro de notificações relacionadas aos alertas. |
+| Encaminhamentos | Opcional | Registro de possíveis encaminhamentos relacionados aos alertas. |
 
 ### Situação das telas no frontend
 
-| Tela                                      | Situação                | Observação                                                                                         |
-|-------------------------------------------|-------------------------|----------------------------------------------------------------------------------------------------|
-| Login (`index.html`)                      | Integrada               | Autentica pelo Supabase Auth e consulta `/usuarios/me` para validar o acesso.                      |
-| Alterar senha (`alterar-senha.html`)      | Integrada               | Envia a nova senha para `PUT /usuarios/me/senha`.                                                  |
-| Usuários (`usuarios.html`)                | Integrada               | Lista usuários; ADM pode cadastrar secretarias, alterar nome e ativar/desativar contas.            |
-| Alunos (`alunos.html`)                    | Integrada               | CRUD e alteração de status por meio de `/alunos`.                                                  |
-| Turmas (`turmas.html`)                    | Integrada               | CRUD e alteração de status por meio de `/turmas`.                                                  |
-| Matrículas e períodos (`matriculas.html`) | Integrada               | Cadastro, consulta, encerramento e transferência de matrículas; CRUD e status de períodos letivos. |
-| Painel (`painel.html`)                    | Apenas estrutura visual | Os indicadores exibem estado de espera e não consultam dados da API.                               |
-| Frequência (`frequencias.html`)           | Integrada               | Gerencia fechamentos semanais, dias/aulas e frequências por matrícula usando os endpoints da API.  |
-| Alertas (`alertas.html`)                  | Apenas estrutura visual | O backend já disponibiliza `GET /alertas`, mas a tela ainda não consulta os alertas reais.         |
-| Acompanhamentos (`acompanhamento.html`)   | Apenas estrutura visual | Não registra intervenções nem notificações.                                                        |
-| Relatórios (`relatorios.html`)            | Apenas estrutura visual | Não consulta nem consolida dados da API.                                                           |
+| Tela | Situação | Observação |
+|---|---|---|
+| Login (`index.html`) | Integrada | Autentica pelo Supabase Auth e consulta `/usuarios/me` para validar o acesso. |
+| Alterar senha (`alterar-senha.html`) | Integrada | Envia a nova senha para `PUT /usuarios/me/senha`. |
+| Usuários (`usuarios.html`) | Integrada | Lista usuários; ADM pode cadastrar secretarias, alterar nome e ativar/desativar contas. |
+| Alunos (`alunos.html`) | Integrada | CRUD e alteração de status por meio de `/alunos`. |
+| Turmas (`turmas.html`) | Integrada | CRUD e alteração de status por meio de `/turmas`. |
+| Matrículas e períodos (`matriculas.html`) | Integrada | Cadastro, consulta, encerramento e transferência de matrículas; CRUD e status de períodos letivos. |
+| Painel (`painel.html`) | Apenas estrutura visual | Os indicadores exibem estado de espera e não consultam dados da API. |
+| Frequência (`frequencias.html`) | Integrada | Gerencia fechamentos semanais, dias/aulas e frequências por matrícula usando os endpoints da API. |
+| Alertas (`alertas.html`) | Apenas estrutura visual | O backend já disponibiliza `GET /alertas`, mas a tela ainda não consulta os alertas reais. |
+| Acompanhamentos (`acompanhamento.html`) | Apenas estrutura visual | Não registra intervenções nem notificações. |
+| Relatórios (`relatorios.html`) | Apenas estrutura visual | Não consulta nem consolida dados da API. |
 
-------------------------------------------------------------------------
+---
 
 ## 🖥️ Frontend — funcionamento atual
 
@@ -141,12 +142,12 @@ As páginas compartilham o cabeçalho e a navegação, montados pelo JavaScript 
 
 ### Autenticação e proteção das páginas
 
-1.  O formulário de `index.html` autentica e-mail e senha pelo Supabase Auth, utilizando `signInWithPassword`.
-2.  Após o login, o frontend consulta `GET /usuarios/me`, enviando o JWT no cabeçalho `Authorization: Bearer`.
-3.  O acesso é aceito somente para os perfis `ADM` e `SECRETARIA`, com conta ativa.
-4.  Se `alterarSenhaObrigatorio` estiver verdadeiro, o usuário é encaminhado para `alterar-senha.html`.
-5.  As páginas internas permanecem ocultas até a validação do usuário terminar.
-6.  A opção de sair encerra a sessão no Supabase e redireciona para `index.html`.
+1. O formulário de `index.html` autentica e-mail e senha pelo Supabase Auth, utilizando `signInWithPassword`.
+2. Após o login, o frontend consulta `GET /usuarios/me`, enviando o JWT no cabeçalho `Authorization: Bearer`.
+3. O acesso é aceito somente para os perfis `ADM` e `SECRETARIA`, com conta ativa.
+4. Se `alterarSenhaObrigatorio` estiver verdadeiro, o usuário é encaminhado para `alterar-senha.html`.
+5. As páginas internas permanecem ocultas até a validação do usuário terminar.
+6. A opção de sair encerra a sessão no Supabase e redireciona para `index.html`.
 
 A proteção no frontend melhora o fluxo de navegação, mas não substitui a autorização do backend. As regras de acesso efetivas também são aplicadas pela API.
 
@@ -168,7 +169,7 @@ O arquivo `js/config.js` concentra:
 - URL base da API.
 - Caminho de consulta do usuário atual.
 
-A configuração local enviada aponta a API para `http://localhost:9000`.
+A configuração local utiliza a API em `http://localhost:9000`.
 
 ### Regras e comportamentos presentes nas telas integradas
 
@@ -220,19 +221,7 @@ Encerramento e transferência solicitam datas no formato `DD/MM/AAAA` e converte
 - Ativação e desativação de contas.
 - Ações administrativas exibidas somente quando o usuário logado possui perfil `ADM`.
 
-### Código legado de frequência
-
-O material do projeto também contém uma implementação anterior de controle de alunos e frequência baseada em `localStorage`, com cadastro por matrícula, marcação diária de presença/ausência, histórico, indicadores e relatórios locais.
-
-Esse código não utiliza os endpoints atuais do EduAlerta e não representa a implementação integrada ao backend.
-
-A página atual `frequencias.html` utiliza os endpoints novos de fechamento semanal e frequência. O código legado em `script.js` não representa esse fluxo integrado. As telas de alertas e relatórios ainda não consomem dados reais da API.
-
-A lógica legada utiliza um critério de alerta de frequência inferior a 75%, diferente da regra de risco definida para o EduAlerta, baseada no percentual de faltas não justificadas por período letivo, com faixas de 20% e 25%.
-
-Esse critério antigo não deve ser tratado como regra oficial do projeto.
-
-------------------------------------------------------------------------
+---
 
 ## 🔐 Perfis e permissões de acesso
 
@@ -245,22 +234,20 @@ Não existe perfil `PROFESSOR` na implementação atual.
 
 Cada perfil possui permissões específicas, definidas no backend.
 
-| Operação                              |  ADM  | SECRETARIA |
-|---------------------------------------|:-----:|:----------:|
-| Acessar o sistema                     |  Sim  |    Sim     |
-| Consultar a lista de usuários         |  Sim  |    Sim     |
-| Buscar usuários                       |  Sim  |    Sim     |
-| Cadastrar novas secretarias           |  Sim  |    Não     |
-| Alterar o nome de outras secretarias  |  Sim  |    Não     |
-| Ativar contas de secretaria           |  Sim  |    Não     |
-| Desativar contas de secretaria        |  Sim  |    Não     |
-| Gerenciar alunos, turmas e matrículas |  Sim  |    Sim     |
-| Gerenciar períodos letivos            |  Sim  |    Sim     |
-| Registrar e fechar frequências        | Sim\* |   Sim\*    |
-| Consultar alertas                     | Sim\* |   Sim\*    |
-| Registrar acompanhamentos             | Sim\* |   Sim\*    |
-
-\* Permissões previstas para os módulos futuros, ainda sem endpoints implementados.
+| Operação | ADM | SECRETARIA |
+|---|:---:|:---:|
+| Acessar o sistema | Sim | Sim |
+| Consultar a lista de usuários | Sim | Sim |
+| Buscar usuários | Sim | Sim |
+| Cadastrar novas secretarias | Sim | Não |
+| Alterar o nome de outras secretarias | Sim | Não |
+| Ativar contas de secretaria | Sim | Não |
+| Desativar contas de secretaria | Sim | Não |
+| Gerenciar alunos, turmas e matrículas | Sim | Sim |
+| Gerenciar períodos letivos | Sim | Sim |
+| Registrar e fechar frequências | Sim | Sim |
+| Consultar alertas | Sim | Sim |
+| Registrar acompanhamentos | Futuro | Futuro |
 
 ### ADM
 
@@ -285,12 +272,13 @@ Suas permissões atuais incluem:
 - Consultar e buscar usuários cadastrados.
 - Gerenciar alunos, turmas e matrículas.
 - Gerenciar períodos letivos.
+- Registrar e fechar frequências semanais.
+- Consultar alertas.
 
 Para os módulos futuros, também está prevista a possibilidade de:
 
 - Cadastrar e associar responsáveis.
-- Registrar e fechar frequências semanais.
-- Consultar alertas e registrar acompanhamentos.
+- Registrar acompanhamentos e intervenções.
 
 A secretaria não pode cadastrar novos usuários, alterar o nome de outras secretarias ou modificar o status de suas contas.
 
@@ -308,12 +296,12 @@ Após esse provisionamento, o ADM pode cadastrar novas contas com perfil `SECRET
 
 Ao cadastrar uma secretaria:
 
-1.  O backend gera uma senha temporária.
-2.  Cria a identidade do usuário no Supabase Auth.
-3.  Persiste os dados locais em `tb_usuario`, com perfil `SECRETARIA`.
-4.  Marca `alterar_senha_obrigatorio` como `true`.
-5.  Envia a senha temporária por e-mail.
-6.  Se ocorrer falha durante a persistência local ou o envio do e-mail, o backend tenta excluir a identidade criada no Supabase.
+1. O backend gera uma senha temporária.
+2. Cria a identidade do usuário no Supabase Auth.
+3. Persiste os dados locais em `tb_usuario`, com perfil `SECRETARIA`.
+4. Marca `alterar_senha_obrigatorio` como `true`.
+5. Envia a senha temporária por e-mail.
+6. Se ocorrer falha durante a persistência local ou o envio do e-mail, o backend tenta excluir a identidade criada no Supabase.
 
 No primeiro acesso, o usuário deve alterar a senha pelo endpoint `PUT /usuarios/me/senha`.
 
@@ -347,7 +335,7 @@ Alunos e responsáveis não possuem acesso autenticado ao sistema na primeira ve
 - As regras de acesso são verificadas pelo backend, independentemente da proteção visual do frontend.
 - O CORS atual permite origens `localhost` e `127.0.0.1` com portas variáveis, métodos `GET`, `POST`, `PUT`, `DELETE` e `OPTIONS`, e cabeçalhos `Authorization` e `Content-Type`.
 
-------------------------------------------------------------------------
+---
 
 ## 🌐 API REST — Endpoints implementados
 
@@ -357,7 +345,7 @@ Todos os endpoints abaixo exigem JWT válido.
 
 Para as rotas protegidas, envie:
 
-``` http
+```http
 Authorization: Bearer SEU_TOKEN_JWT
 Content-Type: application/json
 ```
@@ -368,23 +356,23 @@ Os endpoints e métodos desta seção representam os controllers presentes no ba
 
 ### Usuários — `/usuarios`
 
-| Método   | Endpoint                       | Descrição                                                                | Regra de acesso                                                      |
-|----------|--------------------------------|--------------------------------------------------------------------------|----------------------------------------------------------------------|
-| `POST`   | `/usuarios`                    | Cadastra uma nova secretaria.                                            | Somente `ADM`.                                                       |
-| `GET`    | `/usuarios/me`                 | Consulta os dados do usuário autenticado.                                | Usuário autenticado, inclusive durante a troca obrigatória de senha. |
-| `PUT`    | `/usuarios/me`                 | Atualiza o nome do próprio usuário.                                      | Usuário autenticado que já concluiu a troca obrigatória de senha.    |
-| `PUT`    | `/usuarios/me/senha`           | Atualiza a senha no Supabase Auth.                                       | Usuário autenticado.                                                 |
-| `DELETE` | `/usuarios/me`                 | Desativa a própria conta.                                                | Usuário autenticado que já concluiu a troca obrigatória de senha.    |
-| `GET`    | `/usuarios`                    | Lista os usuários cadastrados.                                           | `ADM` e `SECRETARIA`.                                                |
-| `GET`    | `/usuarios/buscar?nome={nome}` | Busca usuários por parte do nome, sem diferenciar maiúsculas/minúsculas. | `ADM` e `SECRETARIA`.                                                |
-| `PUT`    | `/usuarios/{id}/nome`          | Altera o nome de uma secretaria.                                         | Somente `ADM`; não permite alterar a própria conta.                  |
-| `PUT`    | `/usuarios/{id}/status`        | Ativa ou desativa uma secretaria.                                        | Somente `ADM`; não permite alterar a própria conta.                  |
+| Método | Endpoint | Descrição | Regra de acesso |
+|---|---|---|---|
+| `POST` | `/usuarios` | Cadastra uma nova secretaria. | Somente `ADM`. |
+| `GET` | `/usuarios/me` | Consulta os dados do usuário autenticado. | Usuário autenticado, inclusive durante a troca obrigatória de senha. |
+| `PUT` | `/usuarios/me` | Atualiza o nome do próprio usuário. | Usuário autenticado que já concluiu a troca obrigatória de senha. |
+| `PUT` | `/usuarios/me/senha` | Atualiza a senha no Supabase Auth. | Usuário autenticado. |
+| `DELETE` | `/usuarios/me` | Desativa a própria conta. | Usuário autenticado que já concluiu a troca obrigatória de senha. |
+| `GET` | `/usuarios` | Lista os usuários cadastrados. | `ADM` e `SECRETARIA`. |
+| `GET` | `/usuarios/buscar?nome={nome}` | Busca usuários por parte do nome, sem diferenciar maiúsculas/minúsculas. | `ADM` e `SECRETARIA`. |
+| `PUT` | `/usuarios/{id}/nome` | Altera o nome de uma secretaria. | Somente `ADM`; não permite alterar a própria conta. |
+| `PUT` | `/usuarios/{id}/status` | Ativa ou desativa uma secretaria. | Somente `ADM`; não permite alterar a própria conta. |
 
 #### Corpos das requisições
 
 **POST `/usuarios`**
 
-``` json
+```json
 {
   "nome": "Secretaria Exemplo",
   "email": "secretaria@escola.com"
@@ -395,7 +383,7 @@ O backend define o perfil como `SECRETARIA`. O cliente não envia perfil nem sen
 
 **PUT `/usuarios/me` e PUT `/usuarios/{id}/nome`**
 
-``` json
+```json
 {
   "nome": "Novo Nome"
 }
@@ -403,7 +391,7 @@ O backend define o perfil como `SECRETARIA`. O cliente não envia perfil nem sen
 
 **PUT `/usuarios/me/senha`**
 
-``` json
+```json
 {
   "novaSenha": "UmaSenhaForte123"
 }
@@ -413,7 +401,7 @@ A senha deve possuir entre 8 e 72 caracteres.
 
 **PUT `/usuarios/{id}/status`**
 
-``` json
+```json
 {
   "ativo": false
 }
@@ -423,19 +411,19 @@ O endpoint `GET /usuarios/buscar` exige o parâmetro de consulta `nome`.
 
 ### Alunos — `/alunos`
 
-| Método | Endpoint              | Descrição                                 |
-|--------|-----------------------|-------------------------------------------|
-| `POST` | `/alunos`             | Cadastra um aluno.                        |
-| `GET`  | `/alunos`             | Lista os alunos em ordem crescente de ID. |
-| `GET`  | `/alunos/{id}`        | Consulta um aluno pelo ID.                |
-| `PUT`  | `/alunos/{id}`        | Atualiza nome e data de nascimento.       |
-| `PUT`  | `/alunos/{id}/status` | Ativa ou desativa um aluno.               |
+| Método | Endpoint | Descrição |
+|---|---|---|
+| `POST` | `/alunos` | Cadastra um aluno. |
+| `GET` | `/alunos` | Lista os alunos em ordem crescente de ID. |
+| `GET` | `/alunos/{id}` | Consulta um aluno pelo ID. |
+| `PUT` | `/alunos/{id}` | Atualiza nome e data de nascimento. |
+| `PUT` | `/alunos/{id}/status` | Ativa ou desativa um aluno. |
 
 #### Corpos das requisições
 
 **POST `/alunos`**
 
-``` json
+```json
 {
   "nome": "Nome do Aluno",
   "dataNascimento": "2012-05-20"
@@ -444,7 +432,7 @@ O endpoint `GET /usuarios/buscar` exige o parâmetro de consulta `nome`.
 
 **PUT `/alunos/{id}`**
 
-``` json
+```json
 {
   "nome": "Nome Atualizado",
   "dataNascimento": "2012-05-20"
@@ -453,7 +441,7 @@ O endpoint `GET /usuarios/buscar` exige o parâmetro de consulta `nome`.
 
 **PUT `/alunos/{id}/status`**
 
-``` json
+```json
 {
   "ativo": true
 }
@@ -461,19 +449,19 @@ O endpoint `GET /usuarios/buscar` exige o parâmetro de consulta `nome`.
 
 ### Turmas — `/turmas`
 
-| Método | Endpoint              | Descrição                                 |
-|--------|-----------------------|-------------------------------------------|
-| `POST` | `/turmas`             | Cadastra uma turma.                       |
-| `GET`  | `/turmas`             | Lista as turmas em ordem crescente de ID. |
-| `GET`  | `/turmas/{id}`        | Consulta uma turma pelo ID.               |
-| `PUT`  | `/turmas/{id}`        | Atualiza nome e ano letivo.               |
-| `PUT`  | `/turmas/{id}/status` | Ativa ou desativa uma turma.              |
+| Método | Endpoint | Descrição |
+|---|---|---|
+| `POST` | `/turmas` | Cadastra uma turma. |
+| `GET` | `/turmas` | Lista as turmas em ordem crescente de ID. |
+| `GET` | `/turmas/{id}` | Consulta uma turma pelo ID. |
+| `PUT` | `/turmas/{id}` | Atualiza nome e ano letivo. |
+| `PUT` | `/turmas/{id}/status` | Ativa ou desativa uma turma. |
 
 #### Corpos das requisições
 
 **POST `/turmas`**
 
-``` json
+```json
 {
   "nome": "8º Ano A",
   "anoLetivo": 2026
@@ -482,7 +470,7 @@ O endpoint `GET /usuarios/buscar` exige o parâmetro de consulta `nome`.
 
 **PUT `/turmas/{id}`**
 
-``` json
+```json
 {
   "nome": "8º Ano B",
   "anoLetivo": 2026
@@ -491,7 +479,7 @@ O endpoint `GET /usuarios/buscar` exige o parâmetro de consulta `nome`.
 
 **PUT `/turmas/{id}/status`**
 
-``` json
+```json
 {
   "ativo": true
 }
@@ -501,19 +489,19 @@ O endpoint `GET /usuarios/buscar` exige o parâmetro de consulta `nome`.
 
 ### Períodos letivos — `/periodos-letivos`
 
-| Método | Endpoint                        | Descrição                                                       |
-|--------|---------------------------------|-----------------------------------------------------------------|
-| `POST` | `/periodos-letivos`             | Cadastra um período letivo.                                     |
-| `GET`  | `/periodos-letivos`             | Lista períodos por ano letivo e semestre, em ordem decrescente. |
-| `GET`  | `/periodos-letivos/{id}`        | Consulta um período letivo pelo ID.                             |
-| `PUT`  | `/periodos-letivos/{id}`        | Atualiza os dados de um período letivo.                         |
-| `PUT`  | `/periodos-letivos/{id}/status` | Ativa ou desativa um período letivo.                            |
+| Método | Endpoint | Descrição |
+|---|---|---|
+| `POST` | `/periodos-letivos` | Cadastra um período letivo. |
+| `GET` | `/periodos-letivos` | Lista períodos por ano letivo e semestre, em ordem decrescente. |
+| `GET` | `/periodos-letivos/{id}` | Consulta um período letivo pelo ID. |
+| `PUT` | `/periodos-letivos/{id}` | Atualiza os dados de um período letivo. |
+| `PUT` | `/periodos-letivos/{id}/status` | Ativa ou desativa um período letivo. |
 
 #### Corpos das requisições
 
 **POST `/periodos-letivos`**
 
-``` json
+```json
 {
   "nome": "1º Semestre de 2026",
   "anoLetivo": 2026,
@@ -525,7 +513,7 @@ O endpoint `GET /usuarios/buscar` exige o parâmetro de consulta `nome`.
 
 **PUT `/periodos-letivos/{id}`**
 
-``` json
+```json
 {
   "nome": "1º Semestre de 2026",
   "anoLetivo": 2026,
@@ -537,7 +525,7 @@ O endpoint `GET /usuarios/buscar` exige o parâmetro de consulta `nome`.
 
 **PUT `/periodos-letivos/{id}/status`**
 
-``` json
+```json
 {
   "ativo": true
 }
@@ -555,21 +543,21 @@ O código atual não impõe que o ano do período letivo seja o ano corrente ou 
 
 ### Matrículas — `/matriculas`
 
-| Método | Endpoint                                | Descrição                                                                              |
-|--------|-----------------------------------------|----------------------------------------------------------------------------------------|
-| `POST` | `/matriculas`                           | Cria uma matrícula para um aluno em uma turma.                                         |
-| `GET`  | `/matriculas`                           | Lista as matrículas em ordem crescente de ID.                                          |
-| `GET`  | `/matriculas/{id}`                      | Consulta uma matrícula pelo ID.                                                        |
-| `GET`  | `/matriculas/aluno/{alunoId}`           | Lista o histórico de matrículas de um aluno, da mais recente para a mais antiga.       |
-| `GET`  | `/matriculas/{id}/frequencia-acumulada` | Calcula faltas não justificadas, aulas realizadas e percentual acumulado da matrícula. |
-| `PUT`  | `/matriculas/{id}/encerramento`         | Encerra uma matrícula ativa.                                                           |
-| `POST` | `/matriculas/{id}/transferencia`        | Encerra a matrícula atual e cria outra na turma de destino.                            |
+| Método | Endpoint | Descrição |
+|---|---|---|
+| `POST` | `/matriculas` | Cria uma matrícula para um aluno em uma turma. |
+| `GET` | `/matriculas` | Lista as matrículas em ordem crescente de ID. |
+| `GET` | `/matriculas/{id}` | Consulta uma matrícula pelo ID. |
+| `GET` | `/matriculas/aluno/{alunoId}` | Lista o histórico de matrículas de um aluno, da mais recente para a mais antiga. |
+| `GET` | `/matriculas/{id}/frequencia-acumulada` | Calcula faltas não justificadas, aulas realizadas e percentual acumulado da matrícula. |
+| `PUT` | `/matriculas/{id}/encerramento` | Encerra uma matrícula ativa. |
+| `POST` | `/matriculas/{id}/transferencia` | Encerra a matrícula atual e cria outra na turma de destino. |
 
 #### Corpos das requisições
 
 **POST `/matriculas`**
 
-``` json
+```json
 {
   "alunoId": 1,
   "turmaId": 2,
@@ -579,7 +567,7 @@ O código atual não impõe que o ano do período letivo seja o ano corrente ou 
 
 **PUT `/matriculas/{id}/encerramento`**
 
-``` json
+```json
 {
   "dataFim": "2026-06-30"
 }
@@ -587,7 +575,7 @@ O código atual não impõe que o ano do período letivo seja o ano corrente ou 
 
 **POST `/matriculas/{id}/transferencia`**
 
-``` json
+```json
 {
   "turmaId": 3,
   "dataTransferencia": "2026-07-01"
@@ -600,7 +588,7 @@ Não recebe corpo. Retorna os totais utilizados no cálculo da frequência acumu
 
 Exemplo de resposta:
 
-``` json
+```json
 {
   "matriculaId": 1,
   "alunoId": 1,
@@ -631,19 +619,19 @@ O exemplo é ilustrativo. O cálculo considera somente faltas não justificadas 
 
 Os controllers retornam, em linhas gerais:
 
-| Código HTTP        | Significado                                                                         |
-|--------------------|-------------------------------------------------------------------------------------|
-| `201 Created`      | Cadastro ou transferência que cria um recurso.                                      |
-| `200 OK`           | Consulta ou atualização que retorna conteúdo.                                       |
-| `204 No Content`   | Operação sem corpo de resposta, como troca de senha e desativação da própria conta. |
-| `400 Bad Request`  | Argumentos inválidos, regras de negócio rejeitadas e erros de validação dos DTOs.   |
-| `401 Unauthorized` | Autenticação JWT inválida ou ausente.                                               |
-| `403 Forbidden`    | Operação negada por regra de acesso ou bloqueio do usuário.                         |
-| `404 Not Found`    | Recurso não encontrado quando a exceção correspondente é tratada.                   |
+| Código HTTP | Significado |
+|---|---|
+| `201 Created` | Cadastro ou transferência que cria um recurso. |
+| `200 OK` | Consulta ou atualização que retorna conteúdo. |
+| `204 No Content` | Operação sem corpo de resposta, como troca de senha e desativação da própria conta. |
+| `400 Bad Request` | Argumentos inválidos, regras de negócio rejeitadas e erros de validação dos DTOs. |
+| `401 Unauthorized` | Autenticação JWT inválida ou ausente. |
+| `403 Forbidden` | Operação negada por regra de acesso ou bloqueio do usuário. |
+| `404 Not Found` | Recurso não encontrado quando a exceção correspondente é tratada. |
 
 O formato utilizado pelo `GlobalExceptionHandler` para os erros tratados é:
 
-``` json
+```json
 {
   "status": 400,
   "mensagem": "Descrição do erro"
@@ -654,19 +642,19 @@ A resposta de erro de autenticação produzida diretamente pelo Spring Security 
 
 ### Fechamentos semanais — `/fechamentos-semanais`
 
-| Método   | Endpoint                                  | Descrição                                                                  |
-|----------|-------------------------------------------|----------------------------------------------------------------------------|
-| `POST`   | `/fechamentos-semanais`                   | Cria um fechamento semanal em status `RASCUNHO`.                           |
-| `GET`    | `/fechamentos-semanais`                   | Lista fechamentos; aceita filtros opcionais `turmaId` e `periodoLetivoId`. |
-| `GET`    | `/fechamentos-semanais/{id}`              | Consulta um fechamento, incluindo os dias registrados.                     |
-| `POST`   | `/fechamentos-semanais/{id}/dias`         | Adiciona um dia e sua quantidade de aulas.                                 |
-| `PUT`    | `/fechamentos-semanais/{id}/dias/{diaId}` | Atualiza um dia do fechamento.                                             |
-| `DELETE` | `/fechamentos-semanais/{id}/dias/{diaId}` | Remove um dia do fechamento.                                               |
-| `PUT`    | `/fechamentos-semanais/{id}/fechar`       | Valida os registros e altera o status para `FECHADO`.                      |
+| Método | Endpoint | Descrição |
+|---|---|---|
+| `POST` | `/fechamentos-semanais` | Cria um fechamento semanal em status `RASCUNHO`. |
+| `GET` | `/fechamentos-semanais` | Lista fechamentos; aceita filtros opcionais `turmaId` e `periodoLetivoId`. |
+| `GET` | `/fechamentos-semanais/{id}` | Consulta um fechamento, incluindo os dias registrados. |
+| `POST` | `/fechamentos-semanais/{id}/dias` | Adiciona um dia e sua quantidade de aulas. |
+| `PUT` | `/fechamentos-semanais/{id}/dias/{diaId}` | Atualiza um dia do fechamento. |
+| `DELETE` | `/fechamentos-semanais/{id}/dias/{diaId}` | Remove um dia do fechamento. |
+| `PUT` | `/fechamentos-semanais/{id}/fechar` | Valida os registros e altera o status para `FECHADO`. |
 
 **POST `/fechamentos-semanais`**
 
-``` json
+```json
 {
   "turmaId": 1,
   "periodoLetivoId": 1,
@@ -676,9 +664,9 @@ A resposta de erro de autenticação produzida diretamente pelo Spring Security 
 
 A data inicial deve ser uma segunda-feira. A data final é calculada pelo backend como seis dias depois. A semana precisa ter interseção com o período letivo informado, e não pode existir outro fechamento para a mesma turma, período e data inicial.
 
-**POST `/fechamentos-semanais/{id}/dias`** e **PUT `/fechamentos-semanais/{id}/dias/{diaId}`**
+**POST `/fechamentos-semanais/{id}/dias` e PUT `/fechamentos-semanais/{id}/dias/{diaId}`**
 
-``` json
+```json
 {
   "data": "2026-11-16",
   "quantidadeAulas": 0
@@ -689,16 +677,16 @@ A quantidade de aulas deve ser maior ou igual a zero. O valor zero é válido pa
 
 ### Frequências semanais — `/fechamentos-semanais/{fechamentoId}/frequencias`
 
-| Método   | Endpoint                                                          | Descrição                                                      |
-|----------|-------------------------------------------------------------------|----------------------------------------------------------------|
-| `POST`   | `/fechamentos-semanais/{fechamentoId}/frequencias`                | Registra a frequência de uma matrícula no fechamento.          |
-| `GET`    | `/fechamentos-semanais/{fechamentoId}/frequencias`                | Lista as frequências do fechamento.                            |
-| `PUT`    | `/fechamentos-semanais/{fechamentoId}/frequencias/{frequenciaId}` | Atualiza as quantidades de faltas.                             |
+| Método | Endpoint | Descrição |
+|---|---|---|
+| `POST` | `/fechamentos-semanais/{fechamentoId}/frequencias` | Registra a frequência de uma matrícula no fechamento. |
+| `GET` | `/fechamentos-semanais/{fechamentoId}/frequencias` | Lista as frequências do fechamento. |
+| `PUT` | `/fechamentos-semanais/{fechamentoId}/frequencias/{frequenciaId}` | Atualiza as quantidades de faltas. |
 | `DELETE` | `/fechamentos-semanais/{fechamentoId}/frequencias/{frequenciaId}` | Remove a frequência enquanto o fechamento estiver em rascunho. |
 
 **POST `/fechamentos-semanais/{fechamentoId}/frequencias`**
 
-``` json
+```json
 {
   "matriculaId": 1,
   "faltas": 2,
@@ -708,7 +696,7 @@ A quantidade de aulas deve ser maior ou igual a zero. O valor zero é válido pa
 
 **PUT `/fechamentos-semanais/{fechamentoId}/frequencias/{frequenciaId}`**
 
-``` json
+```json
 {
   "faltas": 1,
   "faltasJustificadas": 2
@@ -726,7 +714,7 @@ O registro é associado à matrícula, que determina o aluno e o vínculo com a 
 - Cada data pode aparecer uma única vez no mesmo fechamento.
 - A quantidade de aulas por dia aceita zero, mas não aceita valores negativos.
 - Só podem ser registradas frequências de matrículas vinculadas à turma do fechamento e com vínculo vigente em algum momento daquela semana.
-- Cada matrícula pode ter apenas uma frequência por fechamento.
+- Cada matrícula pode ter apenas um registro de frequência por fechamento.
 - Faltas e faltas justificadas são campos separados e não podem ser negativas.
 - A soma de faltas não justificadas e justificadas não pode ultrapassar o total de aulas realizadas durante o período em que a matrícula esteve vinculada à turma naquela semana.
 - Ao fechar a semana, o backend exige um registro de frequência para cada matrícula da turma cujo vínculo se sobreponha ao intervalo semanal e valida novamente os totais.
@@ -735,13 +723,13 @@ O registro é associado à matrícula, que determina o aluno e o vínculo com a 
 
 ### Alertas — `/alertas`
 
-| Método | Endpoint   | Descrição                                                                               |
-|--------|------------|-----------------------------------------------------------------------------------------|
-| `GET`  | `/alertas` | Lista os alertas existentes. Aceita os filtros opcionais `alunoId` e `periodoLetivoId`. |
+| Método | Endpoint | Descrição |
+|---|---|---|
+| `GET` | `/alertas` | Lista os alertas existentes. Aceita os filtros opcionais `alunoId` e `periodoLetivoId`. |
 
 Exemplos de consulta:
 
-``` http
+```http
 GET /alertas
 GET /alertas?alunoId=1
 GET /alertas?periodoLetivoId=2
@@ -761,7 +749,7 @@ Os seguintes módulos não possuem controllers ou endpoints disponíveis no back
 - Notificações e encaminhamentos.
 - Dashboard e relatórios.
 
-------------------------------------------------------------------------
+---
 
 ## 🧩 Regras de negócio já implementadas
 
@@ -809,11 +797,46 @@ Esta seção reúne as validações e regras presentes nos módulos atualmente d
 - O fechamento inicia em `RASCUNHO` e pode ser alterado apenas nesse estado.
 - Os dias são registrados individualmente, com quantidade de aulas maior ou igual a zero; portanto, dias sem aula podem ser registrados explicitamente com `quantidadeAulas: 0`.
 - O mesmo dia não pode ser cadastrado duas vezes no mesmo fechamento.
-- A frequência é vinculada à matrícula, não diretamente ao aluno, e separa `faltas` de `faltasJustificadas`.
+- A frequência é vinculada à matrícula, e não diretamente ao aluno, e separa `faltas` de `faltasJustificadas`.
 - A matrícula precisa pertencer à turma do fechamento e seu intervalo de vínculo precisa se sobrepor à semana.
 - A soma das duas categorias de faltas não pode exceder as aulas realizadas durante o intervalo em que a matrícula esteve vinculada naquela semana.
 - Para fechar a semana, todas as matrículas com vínculo sobreposto precisam possuir frequência registrada; os totais são validados novamente.
 - Um fechamento `FECHADO` torna-se imutável pelos endpoints de manutenção de dias e frequências.
+
+### Frequência acumulada, classificação de risco e alertas
+
+O backend possui dois cálculos relacionados, mas com finalidades e recortes diferentes:
+
+- `GET /matriculas/{id}/frequencia-acumulada` calcula a frequência acumulada de uma matrícula, considerando o intervalo do vínculo.
+- Ao fechar um fechamento semanal, o backend recalcula o percentual do aluno no período letivo daquele fechamento e atualiza o alerta correspondente.
+
+A classificação persistida no alerta é baseada na combinação **aluno + período letivo**, e não em uma matrícula isolada.
+
+| Percentual de faltas não justificadas | Classificação |
+|---|---|
+| Abaixo de 20% | Regular, sem alerta |
+| De 20% até abaixo de 25% | `PREVENTIVO` |
+| 25% ou mais | `CRITICO` |
+
+O cálculo utiliza a seguinte fórmula:
+
+\[
+\text{Percentual de faltas} =
+\frac{\text{Faltas não justificadas}}{\text{Aulas realizadas}} \times 100
+\]
+
+Regras aplicadas:
+
+- Somente fechamentos semanais com status `FECHADO` são considerados.
+- Fechamentos em `RASCUNHO` não entram no cálculo.
+- Faltas justificadas não são contabilizadas no percentual.
+- O denominador corresponde à quantidade de aulas efetivamente realizadas.
+- Para o endpoint de frequência acumulada, o recorte é o intervalo da matrícula e os fechamentos da turma vinculados a esse intervalo.
+- Para os alertas, são somadas as faltas não justificadas de todas as matrículas do aluno no período letivo, respeitando o vínculo da matrícula com a turma e o intervalo de matrícula.
+- Para os alertas, as aulas realizadas são somadas a partir dos registros diários dos fechamentos do período letivo, considerando a relação entre aluno, matrícula, turma e período.
+- O percentual é calculado com duas casas decimais e arredondamento `HALF_UP`; a classificação considera o percentual arredondado utilizado pelo serviço.
+
+A geração e a atualização dos alertas são executadas automaticamente ao fechar uma semana. Quando o percentual deixa de alcançar a faixa de risco, o alerta correspondente é removido. Quando permanece em uma faixa de risco, o registro existente é atualizado, sem duplicação.
 
 ### Usuários
 
@@ -828,63 +851,20 @@ Esta seção reúne as validações e regras presentes nos módulos atualmente d
 - Contas inativas são bloqueadas.
 - O backend verifica o status e a situação da troca obrigatória de senha nas operações protegidas.
 
-------------------------------------------------------------------------
-
-## 🚨 Frequência acumulada, classificação de risco e alertas
-
-O backend possui dois cálculos relacionados, mas com finalidades e recortes diferentes:
-
-- `GET /matriculas/{id}/frequencia-acumulada` calcula a frequência acumulada de uma matrícula, considerando o intervalo do vínculo.
-- Ao fechar um fechamento semanal, o backend recalcula o percentual do aluno no período letivo daquele fechamento e atualiza o alerta correspondente.
-
-A classificação persistida no alerta é baseada na combinação **aluno + período letivo**, e não em uma matrícula isolada.
-
-| Percentual de faltas não justificadas | Classificação |
-|---------------------------------------|---------------|
-| Abaixo de 20%                         | Regular       |
-| De 20% até abaixo de 25%              | Preventivo    |
-| 25% ou mais                           | Crítico       |
-
-O cálculo implementado utiliza a seguinte fórmula:
-
-\[ \text{Percentual de faltas} = \frac{\text{Faltas não justificadas}} {\text{Aulas realizadas}} \times 100 \]
-
-### Regras aplicadas pelo cálculo
-
-- Somente fechamentos semanais com status `FECHADO` serão considerados.
-- Fechamentos em `RASCUNHO` não entrarão no cálculo.
-- Faltas justificadas não serão contabilizadas no percentual.
-- O denominador corresponderá à quantidade de aulas efetivamente realizadas.
-- Para o endpoint de frequência acumulada, o recorte é o intervalo da matrícula e os fechamentos da turma vinculados a esse intervalo.
-- Para os alertas, são somadas as faltas não justificadas de todas as matrículas do aluno no período letivo, em fechamentos `FECHADO`, respeitando o vínculo da matrícula com a turma e o intervalo de matrícula.
-- Para os alertas, as aulas realizadas são somadas a partir dos registros diários dos fechamentos `FECHADO` do período letivo, considerando a relação entre aluno, matrícula, turma e período.
-- Faltas justificadas não entram no numerador.
-- O percentual é calculado com duas casas decimais e arredondamento `HALF_UP`; a classificação considera o percentual arredondado utilizado pelo serviço.
-
-As faixas são aplicadas pelo serviço de alertas. O cálculo e a persistência da classificação são executados automaticamente ao fechar uma semana.
-
-### Exemplo
-
-Considere um aluno que acumulou 23 faltas não justificadas em um período com 100 aulas realizadas:
-
-\[ \frac{23}{100}\times100=23% \]
-
-O resultado corresponde à classificação **Preventivo**.
-
-------------------------------------------------------------------------
+---
 
 ## 📅 Controle de frequência — implementação atual
 
 O registro da frequência é realizado por meio de fechamentos semanais por turma. O fechamento reúne as informações dos dias letivos e as frequências dos alunos vinculados às matrículas correspondentes. A interface web já consome esses endpoints.
 
-### Informações previstas
+### Informações registradas
 
 **Fechamento diário:**
 
 - Data do dia.
 - Quantidade de aulas efetivamente realizadas.
 
-**Frequência semanal por aluno:**
+**Frequência semanal por matrícula:**
 
 - Matrícula relacionada.
 - Quantidade de faltas não justificadas.
@@ -894,18 +874,18 @@ Dias sem aulas, feriados e suspensões devem ser registrados com `quantidadeAula
 
 ### Status do fechamento
 
-| Status     | Descrição                                                             |
-|------------|-----------------------------------------------------------------------|
+| Status | Descrição |
+|---|---|
 | `RASCUNHO` | Registro ainda não concluído. Não participa do cálculo de frequência. |
-| `FECHADO`  | Registro concluído e considerado nos cálculos do período letivo.      |
+| `FECHADO` | Registro concluído e considerado nos cálculos do período letivo. |
 
 A separação entre fechamento e frequência permite consolidar as informações sem precisar cadastrar individualmente cada aula ministrada. O endpoint de frequência acumulada utiliza os fechamentos concluídos para calcular o percentual da matrícula.
 
-**Decisão de modelagem:** o sistema não utiliza uma entidade `AULA`. A quantidade de aulas realizadas será registrada por dia em `FECHAMENTO_DIA`, enquanto as faltas serão consolidadas por aluno em `FREQUENCIA_SEMANAL`.
+**Decisão de modelagem:** o sistema não utiliza uma entidade `AULA`. A quantidade de aulas realizadas será registrada por dia em `FECHAMENTO_DIA`, enquanto as faltas serão consolidadas por matrícula em `FREQUENCIA_SEMANAL`.
 
 As entidades `FechamentoSemanal`, `FechamentoDia` e `FrequenciaSemanal`, seus repositories, DTOs, services e controllers estão implementados no backend. A tela `frequencias.html` também está integrada aos endpoints de fechamento e frequência.
 
-------------------------------------------------------------------------
+---
 
 ## 🔔 Alertas e acompanhamentos
 
@@ -913,16 +893,13 @@ A geração e a atualização de alertas estão implementadas no backend. Cada a
 
 ### Funcionamento automático dos alertas
 
-1.  A secretaria fecha um fechamento semanal.
-2.  O backend valida os dias e as frequências registradas.
-3.  O fechamento passa para `FECHADO`.
-4.  Para cada aluno que possui frequência registrada naquele fechamento, o serviço recalcula o percentual acumulado no período letivo.
-5.  Se o percentual for inferior a 20%, um alerta existente para o aluno e período é removido.
-6.  Se o percentual for igual ou superior a 20%, o backend cria ou atualiza o alerta:
-    - `PREVENTIVO`: de 20% até abaixo de 25%.
-    - `CRITICO`: 25% ou mais.
+1. A secretaria fecha um fechamento semanal.
+2. O backend valida os dias e as frequências registradas.
+3. O fechamento passa para `FECHADO`.
+4. Para cada aluno que possui frequência registrada naquele fechamento, o serviço recalcula o percentual acumulado no período letivo.
+5. O serviço cria, atualiza ou remove o alerta correspondente conforme o resultado do cálculo.
 
-Quando um alerta existente permanece dentro das faixas de risco, o mesmo registro é atualizado, sem duplicação. Se o percentual cair abaixo de 20%, o registro é excluído; caso o aluno volte a atingir 20% ou mais em um fechamento posterior, um novo alerta poderá ser criado com outro ID.
+Quando um alerta existente permanece em uma faixa de risco, o mesmo registro é atualizado, sem duplicação. Se o alerta for removido e o aluno voltar a atingir uma faixa de risco em um fechamento posterior, um novo registro poderá ser criado com outro ID.
 
 O alerta armazena o aluno, o período letivo, o percentual, o nível, o motivo descritivo e a data/hora da última atualização. A consulta é disponibilizada por `GET /alertas`, com filtros opcionais por aluno e período letivo.
 
@@ -935,7 +912,7 @@ O alerta armazena o aluno, o período letivo, o percentual, o nível, o motivo d
 
 A entidade `ACOMPANHAMENTO` permanece prevista para registrar tipo de intervenção, descrição, resultado, data/hora e usuário responsável. A entidade `NOTIFICACAO` também permanece no escopo futuro; na primeira versão, não está prevista integração automática com WhatsApp.
 
-------------------------------------------------------------------------
+---
 
 ## 🛠️ Tecnologias
 
@@ -974,14 +951,19 @@ A entidade `ACOMPANHAMENTO` permanece prevista para registrar tipo de intervenç
 - Jakarta Mail
 - `JavaMailSender`
 
-### Ferramentas
+### Containerização e infraestrutura
+
+- Docker
+- Docker Compose
+- Nginx
+
+### Ferramentas de desenvolvimento
 
 - Git e GitHub
 - Maven / Maven Wrapper
-- Neovim
-- VSCodium
+- Editores de código
 
-------------------------------------------------------------------------
+---
 
 ## 🏗️ Arquitetura
 
@@ -989,32 +971,49 @@ O EduAlerta utiliza uma arquitetura cliente-servidor. O frontend consome os endp
 
 O backend utiliza arquitetura em camadas, separando as responsabilidades da aplicação.
 
-| Camada                | Responsabilidade                                              |
-|-----------------------|---------------------------------------------------------------|
-| `controllers`         | Exposição dos endpoints REST.                                 |
-| `dtos`                | Transferência e validação dos dados de entrada e saída.       |
-| `models`              | Entidades e enums do domínio.                                 |
-| `repositorys`         | Persistência e consultas com Spring Data JPA.                 |
-| `services/interfaces` | Contratos dos serviços.                                       |
-| `services/impls`      | Implementação das regras de negócio.                          |
-| `config/security`     | Configuração de segurança e resolução do usuário autenticado. |
-| `exceptionHandler`    | Tratamento centralizado de exceções da API.                   |
+| Camada | Responsabilidade |
+|---|---|
+| `controllers` | Exposição dos endpoints REST. |
+| `dtos` | Transferência e validação dos dados de entrada e saída. |
+| `models` | Entidades e enums do domínio. |
+| `repositorys` | Persistência e consultas com Spring Data JPA. |
+| `services/interfaces` | Contratos dos serviços. |
+| `services/impls` | Implementação das regras de negócio. |
+| `config/security` | Configuração de segurança e resolução do usuário autenticado. |
+| `exceptionHandler` | Tratamento centralizado de exceções da API. |
 
 ### Comunicação entre os componentes
 
-1.  O usuário realiza login pelo Supabase Auth.
-2.  O Supabase retorna um JWT de acesso.
-3.  O frontend envia o token no cabeçalho `Authorization`.
-4.  O Spring Security valida o JWT como OAuth2 Resource Server.
-5.  O backend utiliza o `sub` do token para localizar o usuário local por `auth_user_id`.
-6.  O backend verifica se a conta está ativa e se a troca de senha obrigatória foi concluída, conforme a operação.
-7.  O controller encaminha a operação ao serviço.
-8.  O serviço executa as regras de negócio e utiliza os repositories para acessar o PostgreSQL.
-9.  A API retorna a resposta ao frontend em JSON.
+1. O usuário realiza login pelo Supabase Auth.
+2. O Supabase retorna um JWT de acesso.
+3. O frontend envia o token no cabeçalho `Authorization`.
+4. O Spring Security valida o JWT como OAuth2 Resource Server.
+5. O backend utiliza o `sub` do token para localizar o usuário local por `auth_user_id`.
+6. O backend verifica se a conta está ativa e se a troca de senha obrigatória foi concluída, conforme a operação.
+7. O controller encaminha a operação ao serviço.
+8. O serviço executa as regras de negócio e utiliza os repositories para acessar o PostgreSQL.
+9. A API retorna a resposta ao frontend em JSON.
 
 O frontend não acessa diretamente o PostgreSQL. Toda operação sobre os dados da aplicação passa pelo backend.
 
-------------------------------------------------------------------------
+### Containerização com Docker
+
+O projeto utiliza Docker Compose para executar o backend e o frontend como serviços independentes.
+
+O serviço do backend utiliza uma imagem baseada em Java 21, responsável por executar a aplicação Spring Boot. O frontend utiliza Nginx para disponibilizar os arquivos estáticos da aplicação web.
+
+O arquivo `compose.yaml`, localizado na raiz do repositório, centraliza a configuração dos serviços, portas, volumes e dependências.
+
+| Serviço | Tecnologia | Porta no host | Porta no container |
+|---|---|---:|---:|
+| `backend` | Java 21 + Spring Boot | `9000` | `9000` |
+| `frontend` | Nginx | `8188` | `80` |
+
+O arquivo `application.properties` do backend é disponibilizado ao container por meio de uma montagem de volume somente para leitura. Dessa forma, as credenciais e configurações da instalação permanecem fora da imagem construída.
+
+O banco de dados não é executado em container: a aplicação utiliza o PostgreSQL hospedado no Supabase.
+
+---
 
 ## 🗄️ Banco de dados
 
@@ -1026,17 +1025,17 @@ A aplicação utiliza o schema `app` para organizar as tabelas escolares do sist
 
 As entidades JPA presentes no backend documentado mapeiam as seguintes tabelas:
 
-| Tabela                      | Entidade            | Responsabilidade                                                                                          |
-|-----------------------------|---------------------|-----------------------------------------------------------------------------------------------------------|
-| `tb_usuario`                | `Usuario`           | Dados locais do usuário, UUID do Supabase Auth, perfil, status e indicador de troca obrigatória de senha. |
-| `app.tb_aluno`              | `Aluno`             | Nome, data de nascimento, status e data de criação do aluno.                                              |
-| `app.tb_turma`              | `Turma`             | Nome, ano letivo e status da turma.                                                                       |
-| `app.tb_periodo_letivo`     | `PeriodoLetivo`     | Nome, ano letivo, semestre, datas inicial/final e status.                                                 |
-| `app.tb_matricula`          | `Matricula`         | Vínculo entre aluno e turma, datas e status da matrícula.                                                 |
-| `app.tb_fechamento_semanal` | `FechamentoSemanal` | Fechamento semanal de uma turma em um período letivo, com usuário responsável e status.                   |
-| `app.tb_fechamento_dia`     | `FechamentoDia`     | Data e quantidade de aulas realizadas em cada dia do fechamento.                                          |
-| `app.tb_frequencia_semanal` | `FrequenciaSemanal` | Faltas não justificadas e justificadas por matrícula e fechamento semanal.                                |
-| `app.tb_alerta`             | `Alerta`            | Percentual acumulado, nível e motivo do alerta por aluno e período letivo, com data de atualização.       |
+| Tabela | Entidade | Responsabilidade |
+|---|---|---|
+| `tb_usuario` | `Usuario` | Dados locais do usuário, UUID do Supabase Auth, perfil, status e indicador de troca obrigatória de senha. |
+| `app.tb_aluno` | `Aluno` | Nome, data de nascimento, status e data de criação do aluno. |
+| `app.tb_turma` | `Turma` | Nome, ano letivo e status da turma. |
+| `app.tb_periodo_letivo` | `PeriodoLetivo` | Nome, ano letivo, semestre, datas inicial/final e status. |
+| `app.tb_matricula` | `Matricula` | Vínculo entre aluno e turma, datas e status da matrícula. |
+| `app.tb_fechamento_semanal` | `FechamentoSemanal` | Fechamento semanal de uma turma em um período letivo, com usuário responsável e status. |
+| `app.tb_fechamento_dia` | `FechamentoDia` | Data e quantidade de aulas realizadas em cada dia do fechamento. |
+| `app.tb_frequencia_semanal` | `FrequenciaSemanal` | Faltas não justificadas e justificadas por matrícula e fechamento semanal. |
+| `app.tb_alerta` | `Alerta` | Percentual acumulado, nível e motivo do alerta por aluno e período letivo, com data de atualização. |
 
 **Observação sobre schemas:** a entidade `Usuario` está mapeada sem declaração explícita de schema na anotação `@Table`. As demais entidades acima declaram o schema `app` no código apresentado. A localização efetiva de `tb_usuario` também depende das propriedades de conexão e configuração JPA.
 
@@ -1044,7 +1043,7 @@ As entidades JPA presentes no backend documentado mapeiam as seguintes tabelas:
 
 O diagrama abaixo representa os relacionamentos JPA implementados no backend atual.
 
-``` mermaid
+```mermaid
 erDiagram
     ALUNO ||--o{ MATRICULA : possui
     TURMA ||--o{ MATRICULA : recebe
@@ -1135,7 +1134,7 @@ O modelo entidade-relacionamento abaixo representa a estrutura funcional complet
 
 Ele inclui tanto as entidades já implementadas quanto aquelas que ainda serão desenvolvidas.
 
-``` mermaid
+```mermaid
 erDiagram
     PERIODO_LETIVO {
         bigint id PK
@@ -1175,7 +1174,7 @@ erDiagram
         bigint id PK
         uuid auth_user_id UK
         string nome
-        string email UK
+        string email
         string perfil
         boolean ativo
         boolean alterar_senha_obrigatorio
@@ -1290,16 +1289,15 @@ erDiagram
 
 ### Entidades ainda previstas, sem implementação no backend
 
-| Entidade            | Responsabilidade                                               |
-|---------------------|----------------------------------------------------------------|
-| `RESPONSAVEL`       | Armazena os dados dos responsáveis pelos alunos.               |
-| `ALUNO_RESPONSAVEL` | Relaciona alunos e responsáveis.                               |
-| `ALERTA`            | Armazena situações de risco identificadas para os alunos.      |
-| `ACOMPANHAMENTO`    | Registra as intervenções realizadas pela instituição.          |
-| `NOTIFICACAO`       | Mantém os registros de notificações relacionadas aos alertas.  |
-| `ENCAMINHAMENTO`    | Representa possíveis encaminhamentos relacionados aos alertas. |
+| Entidade | Responsabilidade |
+|---|---|
+| `RESPONSAVEL` | Armazena os dados dos responsáveis pelos alunos. |
+| `ALUNO_RESPONSAVEL` | Relaciona alunos e responsáveis. |
+| `ACOMPANHAMENTO` | Registra as intervenções realizadas pela instituição. |
+| `NOTIFICACAO` | Mantém os registros de notificações relacionadas aos alertas. |
+| `ENCAMINHAMENTO` | Representa possíveis encaminhamentos relacionados aos alertas. |
 
-Essas entidades ainda não aparecem como models JPA no backend documentado e, portanto, não devem ser consideradas tabelas implementadas.
+A entidade `ALERTA` não aparece nesta relação porque já possui implementação no backend, incluindo model, repository, service e controller de consulta.
 
 ### Decisões importantes da modelagem
 
@@ -1331,7 +1329,7 @@ A identificação de risco considera o aluno e o período letivo, evitando a dup
 
 O alerta representa a situação identificada pelo sistema. O acompanhamento representa a intervenção realizada pela instituição.
 
-------------------------------------------------------------------------
+---
 
 ## 📧 Envio de e-mails
 
@@ -1351,11 +1349,17 @@ Não é necessário possuir domínio próprio para utilizar uma conta Gmail como
 
 O envio depende de credenciais válidas configuradas na aplicação.
 
-------------------------------------------------------------------------
+---
 
 ## ⚙️ Configuração do projeto
 
-O backend utiliza arquivos `application.properties` para configurar:
+Antes de executar o EduAlerta, é necessário configurar os arquivos responsáveis pela conexão do backend e do frontend com os serviços externos.
+
+Essas configurações são individuais para cada instalação do projeto.
+
+### Configuração do backend
+
+O backend utiliza o arquivo `application.properties` para configurar:
 
 - Conexão JDBC com PostgreSQL.
 - Integração com Supabase Auth.
@@ -1364,218 +1368,302 @@ O backend utiliza arquivos `application.properties` para configurar:
 - Alteração de senha autenticada.
 - Envio de e-mails pelo Gmail SMTP.
 
-O repositório disponibiliza um arquivo de exemplo:
+O repositório disponibiliza o arquivo de exemplo:
 
-``` text
-application.properties.example
-```
+`back-end/edualerta/src/main/resources/application.properties.example`
 
-Para executar a aplicação, copie esse modelo para:
+Para configurar o backend:
 
-``` text
-src/main/resources/application.properties
-```
-
-Em seguida, preencha os dados da sua instalação.
+1. Localize o arquivo `application.properties.example`.
+2. Faça uma cópia desse arquivo.
+3. Renomeie a cópia para `application.properties`, removendo apenas a extensão `.example`.
+4. Abra o novo arquivo em um editor de texto.
+5. Preencha as propriedades com as credenciais da sua instalação.
 
 As configurações necessárias incluem:
 
 - URL e credenciais de conexão com PostgreSQL/Supabase.
 - URL do projeto Supabase.
 - Chave administrativa necessária às operações de criação, exclusão e bloqueio de usuários.
-- Chave pública/anon ou publishable necessária à alteração de senha autenticada.
+- Chave pública necessária à alteração de senha autenticada.
 - Credenciais SMTP do Gmail.
 
-Os nomes exatos das propriedades devem seguir o `application.properties` e as classes de configuração da versão do backend utilizada.
+Os nomes e formatos das propriedades devem seguir o modelo disponibilizado no arquivo de exemplo.
 
-**O funcionamento do backend não depende de variáveis de ambiente na configuração atual documentada.**
+**Importante:** o backend utiliza o `application.properties` disponibilizado ao container pelo Docker Compose. Não é necessário configurar variáveis de ambiente para essa configuração atual.
 
 O arquivo `application.properties` com credenciais reais não deve ser versionado no Git.
 
-No frontend, as configurações ficam centralizadas em `js/config.js`, incluindo a URL da API e os dados públicos de conexão com o Supabase.
+### Configuração do frontend
 
-------------------------------------------------------------------------
+O frontend utiliza o arquivo `js/config.js` para centralizar as configurações de comunicação com os serviços externos.
+
+Esse arquivo contém:
+
+- URL do projeto Supabase.
+- Chave pública de acesso ao Supabase.
+- URL base da API do EduAlerta.
+- Caminho de consulta do usuário autenticado.
+
+Para configurar o frontend:
+
+1. Localize o arquivo `frontend/js/config.js`.
+2. Abra o arquivo em um editor de texto.
+3. Preencha os dados do seu projeto Supabase.
+4. Confira se a URL base da API corresponde ao endereço utilizado pelo backend.
+
+Na execução local com Docker, a URL base da API deve apontar para:
+
+`http://localhost:9000`
+
+A chave utilizada no frontend deve ser a chave pública do Supabase. A chave administrativa ou `service_role` não deve ser colocada no frontend.
+
+### Usuário administrativo inicial
+
+O EduAlerta não possui cadastro público de usuários.
+
+Para realizar o primeiro acesso, é necessário que exista previamente:
+
+- Uma identidade de usuário cadastrada no Supabase Auth.
+- Um registro correspondente na tabela `tb_usuario`.
+- O mesmo UUID do Supabase Auth armazenado em `auth_user_id`.
+- O perfil local configurado como `ADM`.
+- A conta em situação ativa.
+
+Após o provisionamento inicial, o ADM poderá cadastrar novas contas de secretaria pela aplicação.
+
+**Observação:** o Docker não cria automaticamente o usuário administrativo nem configura as credenciais dos serviços externos. Essas configurações precisam estar prontas antes da execução.
+
+---
 
 ## 📂 Estrutura do projeto
 
-A estrutura geral do repositório separa o backend e o frontend.
+A estrutura geral do repositório separa o backend e o frontend, além dos arquivos responsáveis pela containerização da aplicação.
 
-### Backend
+### Estrutura geral
 
-``` text
-back-end/
-└── edualerta/
-    ├── src/
-    │   ├── main/
-    │   │   ├── java/
-    │   │   │   └── edu/uninassau/edualerta/
-    │   │   │       ├── config/
-    │   │   │       │   └── security/
-    │   │   │       ├── controllers/
-    │   │   │       ├── dtos/
-    │   │   │       ├── exceptionHandler/
-    │   │   │       ├── models/
-    │   │   │       ├── repositorys/
-    │   │   │       └── services/
-    │   │   │           ├── interfaces/
-    │   │   │           └── impls/
-    │   │   └── resources/
-    │   └── test/
-    ├── src/main/resources/application.properties.example
-    ├── mvnw
-    ├── mvnw.cmd
-    └── pom.xml
-```
-
-### Frontend
-
-``` text
-frontend/
-├── index.html
-├── alterar-senha.html
-├── painel.html
-├── usuarios.html
-├── alunos.html
-├── turmas.html
-├── matriculas.html
-├── frequencias.html
-├── alertas.html
-├── acompanhamento.html
-├── relatorios.html
-├── css/
-│   └── style.css
-└── js/
-    ├── config.js
-    ├── auth.js
-    ├── layout.js
-    ├── login.js
-    ├── alterar-senha.js
-    ├── gestao-escolar.js
-    └── usuarios.js
+```text
+EduAlerta/
+├── back-end/
+│   └── edualerta/
+│       ├── config/
+│       │   └── docker/
+│       │       └── Dockerfile.backend
+│       ├── src/
+│       │   ├── main/
+│       │   │   ├── java/
+│       │   │   │   └── edu/uninassau/edualerta/
+│       │   │   │       ├── config/
+│       │   │   │       │   └── security/
+│       │   │   │       ├── controllers/
+│       │   │   │       ├── dtos/
+│       │   │   │       ├── exceptionHandler/
+│       │   │   │       ├── models/
+│       │   │   │       ├── repositorys/
+│       │   │   │       └── services/
+│       │   │   │           ├── interfaces/
+│       │   │   │           └── impls/
+│       │   │   └── resources/
+│       │   │       ├── application.properties.example
+│       │   │       └── ...
+│       │   └── test/
+│       ├── mvnw
+│       ├── mvnw.cmd
+│       └── pom.xml
+│
+├── frontend/
+│   ├── config/
+│   │   └── docker/
+│   │       └── nginx.conf
+│   ├── Dockerfile
+│   ├── index.html
+│   ├── alterar-senha.html
+│   ├── painel.html
+│   ├── usuarios.html
+│   ├── alunos.html
+│   ├── turmas.html
+│   ├── matriculas.html
+│   ├── frequencias.html
+│   ├── alertas.html
+│   ├── acompanhamento.html
+│   ├── relatorios.html
+│   ├── css/
+│   │   └── style.css
+│   └── js/
+│       ├── config.js
+│       ├── auth.js
+│       ├── layout.js
+│       ├── login.js
+│       ├── alterar-senha.js
+│       ├── gestao-escolar.js
+│       └── usuarios.js
+│
+├── .dockerignore
+├── compose.yaml
+└── DOCKER.md
 ```
 
 A estrutura apresentada representa a organização documentada do projeto e pode receber novos diretórios conforme os módulos forem implementados.
 
-------------------------------------------------------------------------
+---
 
-## 🚀 Executando o projeto
+## 🚀 Executando o projeto com Docker
+
+O EduAlerta utiliza Docker Compose para executar o backend e o frontend simultaneamente.
+
+Toda a inicialização da aplicação é realizada pelo Docker Compose. Não é necessário iniciar o backend e o frontend separadamente.
 
 ### Pré-requisitos
 
-- Java 21.
-- Maven (opcional, pois o projeto possui Maven Wrapper).
-- Conta e projeto no Supabase.
-- PostgreSQL disponibilizado pelo Supabase.
-- Conta Gmail com autenticação em duas etapas e senha de aplicativo configurada, caso queira testar o envio de e-mails.
-- Navegador atualizado.
-- Servidor HTTP estático para disponibilizar o frontend.
+Antes de executar o projeto, é necessário possuir:
 
-### 1. Clone o repositório
+- Git, para obter o repositório.
+- Docker Engine.
+- Docker Compose, por meio do comando `docker compose`.
+- Projeto Supabase configurado.
+- Arquivo `application.properties` devidamente preenchido.
+- Arquivo `js/config.js` devidamente preenchido.
+- Usuário administrativo previamente cadastrado no Supabase Auth e vinculado ao registro correspondente em `tb_usuario`.
 
-``` bash
-git clone URL_DO_REPOSITORIO
+Não é necessário instalar Java, Maven ou configurar um servidor HTTP para o frontend na máquina host. O Docker utiliza as imagens e configurações do próprio projeto.
+
+### 1. Obtenha o projeto
+
+Clone o repositório do EduAlerta pelo GitHub ou utilize a opção de download do código-fonte disponibilizada na página do projeto.
+
+Após obter os arquivos, abra a pasta principal do EduAlerta.
+
+**Importante:** a pasta principal é aquela que contém o arquivo `compose.yaml`.
+
+### 2. Configure o backend e o frontend
+
+Antes de iniciar a aplicação, configure os arquivos descritos na seção [Configuração do projeto](#-configuração-do-projeto):
+
+- `back-end/edualerta/src/main/resources/application.properties`
+- `frontend/js/config.js`
+
+Confira também se o usuário administrativo inicial já foi provisionado no Supabase Auth e possui o registro correspondente na tabela `tb_usuario`.
+
+### 3. Construa as imagens e inicie a aplicação
+
+Com o Docker instalado e os arquivos de configuração preenchidos, abra um terminal na pasta principal do projeto e execute:
+
+```bash
+docker compose up -d --build
 ```
 
-### 2. Execute o backend
+Esse comando realiza duas operações:
 
-Entre no diretório:
+- `--build`: constrói as imagens do backend e do frontend.
+- `-d`: inicia os containers em segundo plano, sem manter o terminal preso ao processo.
 
-``` bash
-cd EduAlerta/back-end/edualerta
+Na primeira execução, o Docker precisará baixar as imagens-base e construir os serviços. Por isso, a inicialização pode demorar um pouco mais.
+
+O Compose inicia os seguintes serviços:
+
+| Serviço | Tecnologia | Porta |
+|---|---|---|
+| Backend | Java 21 + Spring Boot | `9000` |
+| Frontend | Nginx | `8188` |
+
+O backend utiliza o arquivo `application.properties` configurado anteriormente, disponibilizado dentro do container pelo Docker Compose.
+
+O banco de dados não é executado em container: a aplicação utiliza o PostgreSQL hospedado no Supabase.
+
+### 4. Verifique a execução
+
+Para verificar se os serviços estão em execução:
+
+```bash
+docker compose ps
 ```
 
-Copie o arquivo de exemplo:
+Os containers do backend e do frontend devem apresentar o estado `Up`.
 
-``` bash
-cp src/main/resources/application.properties.example src/main/resources/application.properties
+Para consultar os logs de inicialização e funcionamento:
+
+```bash
+docker compose logs -f
 ```
 
-Preencha as propriedades com os dados da sua instalação.
+Para sair da visualização dos logs, pressione `Ctrl + C`. Isso não desliga os containers.
 
-Execute a aplicação no Linux:
+### 5. Acesse o sistema
 
-``` bash
-./mvnw spring-boot:run
+Com os containers em execução, abra o navegador e acesse:
+
+**Frontend:**
+
+`http://localhost:8188`
+
+**Backend:**
+
+`http://localhost:9000`
+
+A autenticação é realizada pelo Supabase Auth. Para acessar o sistema, é necessário possuir uma conta previamente provisionada no Supabase Auth e vinculada ao registro correspondente na tabela `tb_usuario`.
+
+O banco de dados utilizado continua sendo o PostgreSQL hospedado no Supabase.
+
+### 6. Inicie novamente o projeto
+
+Depois que as imagens já tiverem sido construídas, não é necessário executar o processo de construção novamente caso não existam alterações que exijam um novo build.
+
+Para iniciar o projeto:
+
+```bash
+docker compose up -d
 ```
 
-No Windows:
+Esse comando reutiliza as imagens existentes e inicia os containers.
 
-``` powershell
-.\mvnw.cmd spring-boot:run
+### 7. Reconstrua as imagens após alterações
+
+Quando houver alterações que precisem ser incorporadas às imagens, como modificações no código do backend, dependências, Dockerfiles ou arquivos copiados para a imagem do frontend, execute:
+
+```bash
+docker compose up -d --build
 ```
 
-O backend utiliza a porta `9000` na configuração atual.
+Assim, o Docker reconstrói as imagens e inicia os containers com a nova versão.
 
-A aplicação depende de uma configuração válida do PostgreSQL e do Supabase para iniciar corretamente. O Hibernate está configurado com `ddl-auto=validate`: as tabelas precisam existir no banco e corresponder ao mapeamento das entidades; a aplicação não cria nem atualiza automaticamente o schema.
+### 8. Desligue o projeto
 
-### 3. Configure o frontend
+Quando terminar de utilizar o EduAlerta, execute na pasta principal do projeto:
 
-Entre na pasta `frontend` e abra o projeto em um servidor HTTP estático.
-
-Pode ser utilizada a extensão Live Server do VS Code/VSCodium ou outro servidor HTTP local.
-
-Confira o arquivo:
-
-``` text
-frontend/js/config.js
+```bash
+docker compose down
 ```
 
-Configure:
+Esse comando interrompe e remove os containers e a rede criada pelo Compose.
 
-- `apiBaseUrl`: URL em que o backend Spring Boot está acessível.
-- `supabaseUrl`: URL do projeto Supabase.
-- `supabaseAnonKey`: chave pública de acesso ao Supabase.
+As imagens construídas não são removidas, e os dados armazenados no Supabase permanecem preservados.
 
-A configuração local atual utiliza:
+### Resumo dos comandos Docker
 
-``` text
-http://localhost:9000
-```
+| Operação | Comando |
+|---|---|
+| Construir as imagens | `docker compose build` |
+| Construir e iniciar | `docker compose up -d --build` |
+| Iniciar novamente | `docker compose up -d` |
+| Verificar containers | `docker compose ps` |
+| Consultar logs | `docker compose logs -f` |
+| Desligar o projeto | `docker compose down` |
 
-Não é recomendado abrir as páginas diretamente pelo protocolo `file://`, pois a aplicação depende de requisições HTTP e da sessão do Supabase.
+**Observação:** os comandos do Docker Compose devem ser executados na pasta principal do repositório, no mesmo diretório em que está localizado o arquivo `compose.yaml`.
 
-### 4. Acesse o sistema
-
-Com o backend e o frontend em execução, acesse `index.html` pelo endereço HTTP fornecido pelo servidor estático.
-
-A autenticação inicial depende de uma conta previamente provisionada no Supabase Auth e vinculada ao registro correspondente em `tb_usuario`.
-
-------------------------------------------------------------------------
-
-## 🧪 Testes e validação
-
-O projeto contém atualmente um teste automatizado de contexto (`contextLoads`). Ele verifica a inicialização do contexto Spring, mas não constitui uma suíte automatizada de testes das regras de negócio.
-
-Os módulos de fechamento semanal, frequência acumulada e alertas foram exercitados manualmente por requisições HTTP durante o desenvolvimento. Os logs incluídos no ZIP registram inicializações da aplicação e operações de desenvolvimento; eles não substituem uma suíte automatizada.
-
-#### Cenários manuais validados para os alertas
-
-Os testes foram realizados fechando semanas sucessivas e consultando `GET /alertas`. Os valores abaixo representam o percentual acumulado do mesmo aluno no mesmo período letivo:
-
-| Faltas / aulas | Percentual | Resultado observado                                    |
-|---------------:|-----------:|--------------------------------------------------------|
-|        11 / 26 |     42,31% | `CRITICO`                                              |
-|        11 / 36 |     30,56% | `CRITICO`; alerta existente atualizado, sem duplicação |
-|        11 / 46 |     23,91% | `PREVENTIVO`; transição de crítico para preventivo     |
-|        11 / 56 |     19,64% | Sem alerta; abaixo do limite preventivo                |
-|        12 / 60 |     20,00% | `PREVENTIVO`; validação do limite inferior exato       |
-|        17 / 68 |     25,00% | `CRITICO`; validação do limite crítico exato           |
-
-Os testes confirmaram também que o alerta existente foi atualizado ao passar de `20,00%` para `25,00%`, mantendo o mesmo ID. Quando o percentual caiu para `19,64%`, a consulta retornou uma lista vazia; ao voltar a `20,00%`, um novo alerta foi criado.
-
-O projeto ainda possui apenas o teste automatizado de contexto (`contextLoads`). Portanto, os cenários acima são validações manuais da API, não testes automatizados.
+---
 
 ## 🧭 Próximas etapas do projeto
 
 Com base no estado atual do desenvolvimento e no escopo funcional, as próximas etapas incluem:
 
-1.  Integrar a tela de alertas do frontend ao endpoint `GET /alertas`.
-2.  Implementar o cadastro e a associação de responsáveis, caso permaneçam no escopo da entrega.
-3.  Implementar o registro de acompanhamentos e intervenções.
-4.  Integrar o painel aos dados reais da API.
-5.  Integrar as telas de acompanhamentos e relatórios aos módulos correspondentes.
-6.  Ampliar os testes automatizados para regras de negócio e endpoints.
-7.  Revisar a configuração de ambiente do frontend para separar a URL local da API da URL utilizada em publicação.
+1. Integrar a tela de alertas do frontend ao endpoint `GET /alertas`.
+2. Implementar o cadastro e a associação de responsáveis, caso permaneçam no escopo da entrega.
+3. Implementar o registro de acompanhamentos e intervenções.
+4. Integrar o painel aos dados reais da API.
+5. Integrar as telas de acompanhamentos e relatórios aos módulos correspondentes.
+6. Ampliar a cobertura automatizada das regras de negócio e dos endpoints.
+7. Revisar a configuração de ambiente do frontend para separar a URL local da API da URL utilizada em publicação.
 
 ### Funcionalidades fora do escopo inicial
 
@@ -1588,7 +1676,7 @@ Com base no estado atual do desenvolvimento e no escopo funcional, as próximas 
 
 A entidade `ENCAMINHAMENTO` permanece prevista na modelagem como funcionalidade opcional, sujeita à disponibilidade de tempo e à priorização da entrega.
 
-------------------------------------------------------------------------
+---
 
 ## 📖 Sobre o projeto
 

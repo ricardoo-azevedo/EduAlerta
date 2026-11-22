@@ -1,0 +1,27 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: back-end/edualerta/config/docker/Dockerfile.backend
+    container_name: edualerta-backend
+    ports:
+      - "9000:9000"
+    volumes:
+      - type: bind
+        source: ./back-end/edualerta/src/main/resources/application.properties
+        target: /app/config/application.properties
+        read_only: true
+        bind:
+          create_host_path: false
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    container_name: edualerta-frontend
+    ports:
+      - "8188:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
