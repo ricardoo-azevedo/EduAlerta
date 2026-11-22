@@ -6,7 +6,7 @@ O EduAlerta é uma aplicação web desenvolvida com o objetivo de auxiliar insti
 
 A plataforma permite organizar os dados escolares, gerenciar alunos, turmas, matrículas e períodos letivos. O backend também permite criar e fechar semanas por turma, registrar aulas realizadas por dia, lançar faltas não justificadas e justificadas por matrícula, consultar a frequência acumulada de uma matrícula e gerar ou atualizar automaticamente alertas por aluno e período letivo quando um fechamento semanal é concluído.
 
-A consulta e a resolução manual de alertas já estão disponíveis na API. Acompanhamentos, notificações e relatórios permanecem em desenvolvimento.
+A consulta e a resolução manual de alertas já estão disponíveis na API. O registro de acompanhamentos, notificações e relatórios permanece em desenvolvimento.
 
 O sistema busca utilizar a tecnologia como ferramenta de apoio à gestão escolar e à prevenção da evasão, facilitando a identificação antecipada de situações que exigem atenção e o registro das intervenções realizadas pela instituição.
 
@@ -52,7 +52,7 @@ O desenvolvimento do EduAlerta acontece de forma incremental. Esta seção apres
 - Cálculo do percentual de faltas não justificadas por aluno e período letivo.
 - Geração e atualização automática de alertas ao fechar uma semana.
 - Consulta de alertas com filtros opcionais por aluno, período letivo, nível e situação.
-- Resolução manual de alertas por meio de `PUT /alertas/{id}/resolver`, disponível para `ADM` e `SECRETARIA`.
+- Resolução manual de alertas por meio de endpoint próprio, disponível para os perfis `ADM` e `SECRETARIA`.
 
 ### Implementado ou integrado no frontend
 
@@ -77,7 +77,7 @@ O desenvolvimento do EduAlerta acontece de forma incremental. Esta seção apres
 - Registro de acompanhamentos e intervenções.
 - Notificações e encaminhamentos.
 - Endpoints de dashboard e relatórios.
-- Associação dos alertas resolvidos a registros de acompanhamento, quando esse módulo for implementado.
+- Associação da resolução manual de alertas a um registro de acompanhamento/intervenção. A resolução manual já existe, mas ainda não há entidade ou fluxo de acompanhamento vinculado a ela.
 
 As seções seguintes distinguem as funcionalidades já disponíveis na API daquelas que permanecem apenas previstas na modelagem ou no escopo futuro.
 
@@ -112,7 +112,7 @@ As seções seguintes distinguem as funcionalidades já disponíveis na API daqu
 | Frequência semanal | Implementada | Registro, listagem, edição e remoção de faltas não justificadas e justificadas por matrícula, enquanto o fechamento estiver em rascunho. |
 | Frequência acumulada | Implementada | Consulta do total de faltas não justificadas, aulas realizadas e percentual da matrícula. |
 | Classificação de risco | Implementada | Classificação automática por aluno e período letivo. |
-| Alertas | Implementada | Geração/atualização automática ao fechar semanas, consulta por `GET /alertas` com filtros por aluno, período, nível e situação, e resolução manual por `PUT /alertas/{id}/resolver`. |
+| Alertas | Implementada | Geração/atualização automática ao fechar semanas, consulta com filtros por aluno, período, nível e situação, além de resolução manual. |
 | Acompanhamentos | Pendente | Registro das intervenções realizadas pela instituição. |
 | Notificações | Pendente | Registro de notificações relacionadas aos alertas. |
 | Encaminhamentos | Opcional | Registro de possíveis encaminhamentos relacionados aos alertas. |
@@ -248,6 +248,7 @@ Cada perfil possui permissões específicas, definidas no backend.
 | Gerenciar períodos letivos | Sim | Sim |
 | Registrar e fechar frequências | Sim | Sim |
 | Consultar alertas | Sim | Sim |
+| Resolver alertas manualmente | Sim | Sim |
 | Registrar acompanhamentos | Futuro | Futuro |
 
 ### ADM
@@ -275,6 +276,7 @@ Suas permissões atuais incluem:
 - Gerenciar períodos letivos.
 - Registrar e fechar frequências semanais.
 - Consultar alertas.
+- Resolver alertas manualmente.
 
 Para os módulos futuros, também está prevista a possibilidade de:
 
@@ -724,10 +726,10 @@ O registro é associado à matrícula, que determina o aluno e o vínculo com a 
 
 ### Alertas — `/alertas`
 
-| Método | Endpoint | Descrição |
-|---|---|---|
-| `GET` | `/alertas` | Lista os alertas existentes. Aceita os filtros opcionais `alunoId`, `periodoLetivoId`, `nivel` e `situacao`. |
-| `PUT` | `/alertas/{id}/resolver` | Marca um alerta como `RESOLVIDO` manualmente. Disponível para `ADM` e `SECRETARIA`. |
+| Método | Endpoint | Descrição | Regra de acesso |
+|---|---|---|---|
+| `GET` | `/alertas` | Lista os alertas existentes. Aceita filtros opcionais por `alunoId`, `periodoLetivoId`, `nivel` e `situacao`. | `ADM` e `SECRETARIA`. |
+| `PUT` | `/alertas/{id}/resolver` | Marca um alerta ativo como resolvido manualmente. | `ADM` e `SECRETARIA`. |
 
 Exemplos de consulta:
 
@@ -737,12 +739,16 @@ GET /alertas?alunoId=1
 GET /alertas?periodoLetivoId=2
 GET /alertas?alunoId=1&periodoLetivoId=2
 GET /alertas?nivel=CRITICO&situacao=ATIVO
-GET /alertas?alunoId=1&nivel=PREVENTIVO&situacao=RESOLVIDO
+GET /alertas?periodoLetivoId=2&nivel=PREVENTIVO&situacao=RESOLVIDO
 ```
 
-O endpoint exige autenticação JWT e retorna os dados do alerta, incluindo aluno, período letivo, percentual, nível, situação, motivo e data da última atualização. Os valores aceitos para `nivel` são `PREVENTIVO` e `CRITICO`; para `situacao`, `ATIVO` e `RESOLVIDO`.
+Os valores aceitos para `nivel` são `PREVENTIVO` e `CRITICO`. Para `situacao`, são aceitos `ATIVO` e `RESOLVIDO`.
 
-A resolução manual é realizada por `PUT /alertas/{id}/resolver`, sem corpo de requisição. O endpoint marca o alerta como `RESOLVIDO` e registra internamente que a resolução foi manual. Um alerta já resolvido não pode ser resolvido novamente. Não existem endpoints de cadastro, edição ou exclusão manual de alertas; a criação e a atualização dos dados de frequência/risco continuam sendo realizadas automaticamente durante o fechamento semanal.
+O endpoint exige autenticação JWT e retorna os dados do alerta, incluindo aluno, período letivo, percentual, nível, situação, motivo e data da última atualização.
+
+A resolução manual não recebe corpo JSON. O backend altera a situação para `RESOLVIDO`, marca internamente `resolvidoManualmente` como `true` e atualiza `atualizadoEm`. O DTO de resposta expõe a situação, mas não expõe o indicador `resolvidoManualmente`.
+
+Não existem endpoints para cadastrar, editar livremente ou excluir alertas. A geração e a atualização dos dados calculados são realizadas automaticamente durante o fechamento semanal; a resolução manual é realizada pelo endpoint acima.
 
 ### Endpoints ainda não implementados
 
@@ -840,7 +846,7 @@ Regras aplicadas:
 - Para os alertas, as aulas realizadas são somadas a partir dos registros diários dos fechamentos do período letivo, considerando a relação entre aluno, matrícula, turma e período.
 - O percentual é calculado com duas casas decimais e arredondamento `HALF_UP`; a classificação considera o percentual arredondado utilizado pelo serviço.
 
-A geração e a atualização dos alertas são executadas automaticamente ao fechar uma semana. Quando o percentual fica abaixo de 20%, o alerta existente passa para a situação `RESOLVIDO`, em vez de ser excluído. Quando permanece em uma faixa de risco, os dados do alerta são atualizados, sem duplicação. Se o alerta tiver sido resolvido manualmente e o percentual continuar em uma faixa de risco, o recálculo automático atualiza seus dados, mas preserva a situação `RESOLVIDO`; se o percentual ficar abaixo de 20%, a resolução deixa de ser considerada manual.
+A geração e a atualização dos alertas são executadas automaticamente ao fechar uma semana. Quando o percentual fica abaixo de 20%, o alerta existente permanece armazenado, mas sua situação passa para `RESOLVIDO` e `resolvidoManualmente` volta para `false`; portanto, o registro não é excluído. Quando o percentual permanece em uma faixa de risco, os dados calculados do registro existente são atualizados, sem duplicação. Se o alerta tiver sido resolvido manualmente e o percentual continuar em uma faixa de risco, ele permanece `RESOLVIDO` enquanto `resolvidoManualmente` estiver `true`.
 
 ### Usuários
 
@@ -901,15 +907,15 @@ A geração e a atualização de alertas estão implementadas no backend. Cada a
 2. O backend valida os dias e as frequências registradas.
 3. O fechamento passa para `FECHADO`.
 4. Para cada aluno que possui frequência registrada naquele fechamento, o serviço recalcula o percentual acumulado no período letivo.
-5. O serviço cria ou atualiza o alerta quando o percentual permanece em uma faixa de risco. Quando o percentual fica abaixo de 20%, um alerta existente passa para `RESOLVIDO`.
+5. O serviço cria ou atualiza o alerta correspondente conforme o resultado do cálculo. Se o percentual ficar abaixo de 20%, um alerta existente é marcado como `RESOLVIDO`; ele não é excluído.
 
-Quando um alerta permanece em uma faixa de risco, o mesmo registro é atualizado, sem duplicação. A resolução manual também está disponível pelo endpoint `PUT /alertas/{id}/resolver`. Alertas resolvidos manualmente permanecem resolvidos enquanto o percentual continuar em uma faixa de risco; a situação pode voltar a ser determinada automaticamente quando o percentual ficar abaixo de 20%.
+Quando um alerta existente permanece em uma faixa de risco, o mesmo registro é atualizado, sem duplicação. Se um alerta resolvido automaticamente voltar a atingir uma faixa de risco em um fechamento posterior, poderá voltar a `ATIVO`. Já um alerta resolvido manualmente permanece `RESOLVIDO` enquanto continuar marcado internamente como resolvido manualmente, mesmo que o percentual calculado continue na faixa de risco.
 
-O alerta armazena o aluno, o período letivo, o percentual, o nível, a situação, o motivo descritivo e a data/hora da última atualização. A consulta é disponibilizada por `GET /alertas`, com filtros opcionais por aluno, período letivo, nível e situação.
+O alerta armazena o aluno, o período letivo, o percentual, o nível (`PREVENTIVO` ou `CRITICO`), a situação (`ATIVO` ou `RESOLVIDO`), o indicador interno de resolução manual, o motivo descritivo e a data/hora da última atualização. A consulta é disponibilizada por `GET /alertas`, com filtros opcionais por aluno, período letivo, nível e situação. A resolução manual é disponibilizada por `PUT /alertas/{id}/resolver`.
 
 ### Ainda pendente
 
-- Acompanhamentos e intervenções realizados pela instituição, com associação formal ao alerta resolvido.
+- Acompanhamentos e intervenções realizados pela instituição. A resolução manual do alerta já está implementada, mas ainda não é vinculada a um registro de acompanhamento.
 - Notificações relacionadas aos alertas.
 - Encaminhamentos, previstos como funcionalidade opcional.
 
@@ -1038,7 +1044,7 @@ As entidades JPA presentes no backend documentado mapeiam as seguintes tabelas:
 | `app.tb_fechamento_semanal` | `FechamentoSemanal` | Fechamento semanal de uma turma em um período letivo, com usuário responsável e status. |
 | `app.tb_fechamento_dia` | `FechamentoDia` | Data e quantidade de aulas realizadas em cada dia do fechamento. |
 | `app.tb_frequencia_semanal` | `FrequenciaSemanal` | Faltas não justificadas e justificadas por matrícula e fechamento semanal. |
-| `app.tb_alerta` | `Alerta` | Percentual acumulado, nível e motivo do alerta por aluno e período letivo, com data de atualização. |
+| `app.tb_alerta` | `Alerta` | Percentual acumulado, nível, situação, indicador de resolução manual, motivo e data de atualização do alerta por aluno e período letivo. |
 
 **Observação sobre schemas:** a entidade `Usuario` está mapeada sem declaração explícita de schema na anotação `@Table`. As demais entidades acima declaram o schema `app` no código apresentado. A localização efetiva de `tb_usuario` também depende das propriedades de conexão e configuração JPA.
 
@@ -1127,9 +1133,26 @@ erDiagram
         date data_fim
         boolean ativo
     }
+
+    ALERTA {
+        bigint id PK
+        bigint aluno_id FK
+        bigint periodo_letivo_id FK
+        decimal percentual_faltas
+        string nivel
+        string situacao
+        boolean resolvido_manualmente
+        string motivo
+        datetime atualizado_em
+    }
 ```
 
 `USUARIO` e `PERIODO_LETIVO` já possuem entidades e operações próprias no backend. Entretanto, não há relacionamento JPA entre elas e as demais entidades no código enviado.
+
+
+**Campos e restrições relevantes da entidade `Alerta`:** a combinação `aluno_id` + `periodo_letivo_id` possui restrição de unicidade (`uk_alerta_aluno_periodo`), garantindo no máximo um registro de alerta por aluno e período letivo. A entidade também mantém `situacao` (`ATIVO` ou `RESOLVIDO`) e `resolvido_manualmente`, que diferencia uma resolução feita por usuário de uma resolução automática decorrente da queda do percentual para menos de 20%.
+
+**Enums persistidos no backend:** `Perfil` (`ADM`, `SECRETARIA`), `StatusMatricula` (`ATIVA`, `ENCERRADA`), `StatusFechamento` (`RASCUNHO`, `FECHADO`), `NivelAlerta` (`PREVENTIVO`, `CRITICO`) e `SituacaoAlerta` (`ATIVO`, `RESOLVIDO`). Os enums associados às entidades são persistidos como texto (`EnumType.STRING`).
 
 ### Modelagem completa do projeto
 
@@ -1230,6 +1253,8 @@ erDiagram
         bigint periodo_letivo_id FK
         decimal percentual_faltas
         string nivel
+        string situacao
+        boolean resolvido_manualmente
         string motivo
         datetime atualizado_em
     }
@@ -1300,7 +1325,7 @@ erDiagram
 | `NOTIFICACAO` | Mantém os registros de notificações relacionadas aos alertas. |
 | `ENCAMINHAMENTO` | Representa possíveis encaminhamentos relacionados aos alertas. |
 
-A entidade `ALERTA` não aparece nesta relação porque já possui implementação no backend, incluindo model, repository, service e controller de consulta.
+A entidade `ALERTA` já possui implementação no backend, incluindo model, repository, service e controller para consulta e resolução manual. A resolução manual altera a situação do alerta e não cria, por si só, um registro de acompanhamento.
 
 ### Decisões importantes da modelagem
 
@@ -1326,7 +1351,7 @@ O Supabase Auth gerencia a identidade e as credenciais. A tabela `tb_usuario` ma
 
 **Alertas por período letivo**
 
-A identificação de risco considera o aluno e o período letivo, evitando a duplicação de alertas para a mesma combinação.
+A identificação de risco considera o aluno e o período letivo, evitando a duplicação de alertas para a mesma combinação. A entidade possui os campos `nivel` (`PREVENTIVO` ou `CRITICO`), `situacao` (`ATIVO` ou `RESOLVIDO`), `resolvido_manualmente`, `motivo`, `percentual_faltas` e `atualizado_em`. A combinação aluno/período letivo é única.
 
 **Separação entre alerta e acompanhamento**
 
