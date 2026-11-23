@@ -1,374 +1,181 @@
+(async function () {
+  if (!await window.eduAlertaPaginaPronta) return;
 
-async function iniciarUsuarios() {
+  const $ = id => document.getElementById(id);
+  const usuarioAtual = window.usuarioEduAlerta;
+  const ehAdm = usuarioAtual.perfil === "ADM";
+  const areaCadastro = $("areaCadastro");
+  const lista = $("listaUsuarios");
+  const mensagemLista = $("mensagemLista");
+  const mensagemCadastro = $("mensagemCadastro");
+  const botaoAtualizar = $("btnAtualizarUsuarios");
+  const botaoCadastrar = $("btnCadastrarUsuario");
+  const campoBusca = $("buscaUsuario");
 
-  if (window.eduAlertaPaginaPronta) {
-    const paginaAutorizada = await window.eduAlertaPaginaPronta;
-
-    if (!paginaAutorizada) {
-      return;
-    }
+  function avisar(elemento, texto, sucesso = false) {
+    elemento.replaceChildren();
+    if (!texto) return;
+    const div = document.createElement("div");
+    div.className = `alert alert-${sucesso ? "success" : "danger"}`;
+    div.textContent = texto;
+    elemento.appendChild(div);
   }
 
-  const formularioCadastro = document.getElementById("formCadastroUsuario");
-  const nomeUsuario = document.getElementById("nomeUsuario");
-  const emailUsuario = document.getElementById("emailUsuario");
-
-  const botaoCadastrar = document.getElementById("btnCadastrarUsuario");
-  const botaoAtualizar = document.getElementById("btnAtualizarUsuarios");
-
-  const mensagemCadastro = document.getElementById("mensagemCadastro");
-  const mensagemLista = document.getElementById("mensagemLista");
-
-  const listaUsuarios = document.getElementById("listaUsuarios");
-
-  const cabecalhoAcoes = document.getElementById("cabecalhoAcoes");
-  const areaCadastro = document.getElementById("areaCadastro");
-
-  const usuarioLogado = window.usuarioEduAlerta;
-  const ehAdm = usuarioLogado?.perfil === "ADM";
-
-  function mostrarMensagem(elemento, mensagem, tipo) {
-    elemento.textContent = mensagem;
-
-    elemento.className = tipo === "sucesso"
-      ? "alert alert-success"
-      : "alert alert-danger";
+  function celula(linha, texto) {
+    const td = document.createElement("td");
+    td.textContent = String(texto ?? "—");
+    linha.appendChild(td);
+    return td;
   }
 
-  function limparMensagem(elemento) {
-    elemento.textContent = "";
-    elemento.className = "";
+  function indicador(linha, texto, classe) {
+    const td = celula(linha, "");
+    const span = document.createElement("span");
+    span.className = `badge ${classe}`;
+    span.textContent = texto;
+    td.appendChild(span);
   }
 
-  function criarCelula(texto) {
-    const celula = document.createElement("td");
-    celula.textContent = texto ?? "";
-    return celula;
-  }
-
-  function criarIndicadorStatus(ativo) {
-    const indicador = document.createElement("span");
-
-    indicador.className = ativo
-      ? "badge bg-success"
-      : "badge bg-danger";
-
-    indicador.textContent = ativo
-      ? "Ativo"
-      : "Inativo";
-
-    return indicador;
-  }
-
-  function criarIndicadorSenha(alterarSenhaObrigatorio) {
-    const indicador = document.createElement("span");
-
-    indicador.className = alterarSenhaObrigatorio
-      ? "badge bg-warning text-dark"
-      : "badge bg-success";
-
-    indicador.textContent = alterarSenhaObrigatorio
-      ? "Pendente"
-      : "Alterada";
-
-    return indicador;
-  }
-
-  function criarBotao(texto, classe, icone, aoClicar) {
+  function botaoAcao(container, texto, classe, callback) {
     const botao = document.createElement("button");
-
     botao.type = "button";
-    botao.className = `btn ${classe} btn-sm me-1`;
+    botao.className = `btn btn-sm ${classe} me-1 mb-1`;
+    botao.textContent = texto;
+    botao.addEventListener("click", callback);
+    container.appendChild(botao);
+  }
 
-    botao.innerHTML = `<i class="bi ${icone} me-1"></i>${texto}`;
-
-    botao.addEventListener("click", aoClicar);
-
-    return botao;
+  function mensagemVazia(texto) {
+    lista.replaceChildren();
+    const linha = document.createElement("tr");
+    const td = celula(linha, texto);
+    td.colSpan = ehAdm ? 6 : 5;
+    td.className = "text-center text-secondary py-4";
+    lista.appendChild(linha);
   }
 
   async function alterarNome(usuario) {
-    const novoNome = prompt(
-      "Informe o novo nome da secretaria:",
-      usuario.nome
-    );
-
-    if (novoNome === null) {
-      return;
-    }
-
-    const nome = novoNome.trim();
-
+    const entrada = prompt("Informe o novo nome da secretaria:", usuario.nome);
+    if (entrada === null) return;
+    const nome = entrada.trim();
     if (!nome) {
-      mostrarMensagem(
-        mensagemLista,
-        "O nome não pode ficar vazio.",
-        "erro"
-      );
-
+      avisar(mensagemLista, "O nome não pode ficar vazio.");
       return;
     }
-
     try {
       await requisicaoAPI(`/usuarios/${usuario.id}/nome`, {
         method: "PUT",
-
-        headers: {
-          "Content-Type": "application/json"
-        },
-
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nome })
       });
-
-      mostrarMensagem(
-        mensagemLista,
-        "Nome atualizado com sucesso.",
-        "sucesso"
-      );
-
       await carregarUsuarios();
-
+      avisar(mensagemLista, "Nome atualizado com sucesso.", true);
     } catch (erro) {
-      mostrarMensagem(
-        mensagemLista,
-        erro.message || "Não foi possível alterar o nome.",
-        "erro"
-      );
+      avisar(mensagemLista, erro.message || "Não foi possível alterar o nome.");
     }
   }
 
   async function alterarStatus(usuario) {
-    const novoStatus = !usuario.ativo;
-
-    const acao = novoStatus
-      ? "reativar"
-      : "desativar";
-
-    if (!confirm(`Deseja ${acao} a conta de ${usuario.nome}?`)) {
-      return;
-    }
-
+    const ativo = !usuario.ativo;
+    if (!confirm(`Deseja ${ativo ? "reativar" : "desativar"} a conta de ${usuario.nome}?`)) return;
     try {
       await requisicaoAPI(`/usuarios/${usuario.id}/status`, {
         method: "PUT",
-
-        headers: {
-          "Content-Type": "application/json"
-        },
-
-        body: JSON.stringify({
-          ativo: novoStatus
-        })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ativo })
       });
-
-      mostrarMensagem(
-        mensagemLista,
-        `Conta ${novoStatus ? "reativada" : "desativada"} com sucesso.`,
-        "sucesso"
-      );
-
       await carregarUsuarios();
-
+      avisar(mensagemLista, `Conta ${ativo ? "reativada" : "desativada"} com sucesso.`, true);
     } catch (erro) {
-      mostrarMensagem(
-        mensagemLista,
-        erro.message || "Não foi possível alterar o status.",
-        "erro"
-      );
+      avisar(mensagemLista, erro.message || "Não foi possível alterar o status.");
     }
   }
 
-  function renderizarUsuarios(usuarios) {
-    listaUsuarios.innerHTML = "";
-
-    if (!usuarios || usuarios.length === 0) {
-      const linha = document.createElement("tr");
-      const celula = document.createElement("td");
-
-      celula.colSpan = ehAdm ? 6 : 5;
-      celula.className = "text-center text-secondary";
-      celula.textContent = "Nenhum usuário cadastrado.";
-
-      linha.appendChild(celula);
-      listaUsuarios.appendChild(linha);
-
+  function renderizar(usuarios) {
+    lista.replaceChildren();
+    if (usuarios.length === 0) {
+      mensagemVazia("Nenhum usuário encontrado.");
       return;
     }
-
     usuarios.forEach(usuario => {
       const linha = document.createElement("tr");
-
-      linha.appendChild(criarCelula(usuario.nome));
-      linha.appendChild(criarCelula(usuario.email));
-      linha.appendChild(criarCelula(usuario.perfil));
-
-      const celulaStatus = document.createElement("td");
-
-      celulaStatus.appendChild(
-        criarIndicadorStatus(usuario.ativo)
-      );
-
-      linha.appendChild(celulaStatus);
-
-      const celulaSenha = document.createElement("td");
-
-      celulaSenha.appendChild(
-        criarIndicadorSenha(usuario.alterarSenhaObrigatorio)
-      );
-
-      linha.appendChild(celulaSenha);
-
+      celula(linha, usuario.nome);
+      celula(linha, usuario.email);
+      celula(linha, usuario.perfil);
+      indicador(linha, usuario.ativo ? "Ativo" : "Inativo", usuario.ativo ? "bg-success" : "bg-danger");
+      indicador(linha, usuario.alterarSenhaObrigatorio ? "Pendente" : "Alterada",
+        usuario.alterarSenhaObrigatorio ? "bg-warning text-dark" : "bg-success");
       if (ehAdm) {
-        const celulaAcoes = document.createElement("td");
-
-        if (
-          usuario.perfil === "SECRETARIA" &&
-          usuario.id !== usuarioLogado.id
-        ) {
-          celulaAcoes.appendChild(
-            criarBotao(
-              "Nome",
-              "btn-outline-primary",
-              "bi-pencil-square",
-              () => alterarNome(usuario)
-            )
-          );
-
-          celulaAcoes.appendChild(
-            criarBotao(
-              usuario.ativo ? "Desativar" : "Ativar",
-              usuario.ativo
-                ? "btn-outline-danger"
-                : "btn-outline-success",
-              usuario.ativo
-                ? "bi-person-x"
-                : "bi-person-check",
-              () => alterarStatus(usuario)
-            )
-          );
-
+        const acoes = celula(linha, "");
+        if (usuario.perfil === "SECRETARIA" && usuario.id !== usuarioAtual.id) {
+          botaoAcao(acoes, "Nome", "btn-outline-primary", () => alterarNome(usuario));
+          botaoAcao(acoes, usuario.ativo ? "Desativar" : "Ativar",
+            usuario.ativo ? "btn-outline-danger" : "btn-outline-success", () => alterarStatus(usuario));
         } else {
-          celulaAcoes.textContent = "—";
+          acoes.textContent = "—";
         }
-
-        linha.appendChild(celulaAcoes);
       }
-
-      listaUsuarios.appendChild(linha);
+      lista.appendChild(linha);
     });
   }
 
   async function carregarUsuarios() {
+    const nome = campoBusca.value.trim();
+    const caminho = nome ? `/usuarios/buscar?nome=${encodeURIComponent(nome)}` : "/usuarios";
     botaoAtualizar.disabled = true;
-
-    limparMensagem(mensagemLista);
-
-    listaUsuarios.innerHTML = `
-      <tr>
-        <td colspan="${ehAdm ? 6 : 5}" class="text-center text-secondary">
-          Carregando usuários...
-        </td>
-      </tr>
-    `;
-
+    avisar(mensagemLista, "");
+    mensagemVazia("Consultando usuários...");
     try {
-      const usuarios = await requisicaoAPI("/usuarios");
-
-      renderizarUsuarios(usuarios);
-
+      const usuarios = await requisicaoAPI(caminho);
+      if (!Array.isArray(usuarios)) throw new Error("Resposta inesperada da API de usuários.");
+      renderizar(usuarios);
     } catch (erro) {
-      listaUsuarios.innerHTML = "";
-
-      mostrarMensagem(
-        mensagemLista,
-        erro.message || "Não foi possível carregar os usuários.",
-        "erro"
-      );
-
+      mensagemVazia("Não foi possível consultar os usuários.");
+      avisar(mensagemLista, erro.message || "Falha ao carregar usuários.");
     } finally {
       botaoAtualizar.disabled = false;
     }
   }
 
+  areaCadastro.hidden = !ehAdm;
+  if (!ehAdm) $("cabecalhoAcoes").hidden = true;
+
   if (ehAdm) {
-    areaCadastro.hidden = false;
-
-    formularioCadastro.addEventListener("submit", async event => {
-      event.preventDefault();
-
-      limparMensagem(mensagemCadastro);
-
-      const nome = nomeUsuario.value.trim();
-      const email = emailUsuario.value.trim();
-
+    $("formCadastroUsuario").addEventListener("submit", async evento => {
+      evento.preventDefault();
+      const nome = $("nomeUsuario").value.trim();
+      const email = $("emailUsuario").value.trim();
       if (!nome || !email) {
-        mostrarMensagem(
-          mensagemCadastro,
-          "Preencha todos os campos.",
-          "erro"
-        );
-
+        avisar(mensagemCadastro, "Preencha nome e e-mail.");
         return;
       }
-
       botaoCadastrar.disabled = true;
-
-      botaoCadastrar.innerHTML = `
-        <span class="spinner-border spinner-border-sm me-2"></span>
-        Cadastrando...
-      `;
-
+      avisar(mensagemCadastro, "");
       try {
         await requisicaoAPI("/usuarios", {
           method: "POST",
-
-          headers: {
-            "Content-Type": "application/json"
-          },
-
-          body: JSON.stringify({
-            nome,
-            email
-          })
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ nome, email })
         });
-
-        formularioCadastro.reset();
-
-        mostrarMensagem(
-          mensagemCadastro,
-          "Secretaria cadastrada! Os dados de acesso foram enviados por e-mail.",
-          "sucesso"
-        );
-
+        $("formCadastroUsuario").reset();
         await carregarUsuarios();
-
+        avisar(mensagemCadastro, "Secretaria cadastrada. A senha temporária foi enviada por e-mail.", true);
       } catch (erro) {
-        mostrarMensagem(
-          mensagemCadastro,
-          erro.message || "Não foi possível cadastrar a secretaria.",
-          "erro"
-        );
-
+        avisar(mensagemCadastro, erro.message || "Não foi possível cadastrar a secretaria.");
       } finally {
         botaoCadastrar.disabled = false;
-
-        botaoCadastrar.innerHTML =
-          '<i class="bi bi-person-plus me-2"></i>Cadastrar secretaria';
       }
     });
-
-  } else {
-    areaCadastro.hidden = true;
-
-    if (cabecalhoAcoes) {
-      cabecalhoAcoes.hidden = true;
-    }
   }
 
+  $("formBuscaUsuario").addEventListener("submit", evento => {
+    evento.preventDefault();
+    carregarUsuarios();
+  });
+  $("limparBuscaUsuario").addEventListener("click", () => {
+    campoBusca.value = "";
+    carregarUsuarios();
+  });
   botaoAtualizar.addEventListener("click", carregarUsuarios);
-
   await carregarUsuarios();
-}
-
-iniciarUsuarios();
-
+})();
