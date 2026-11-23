@@ -1,79 +1,96 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Alertas | EduAlerta</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-    <link href="css/style.css" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Alertas | EduAlerta</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="css/style.css" rel="stylesheet">
 </head>
 <body hidden>
-    <div id="cabecalho"></div>
-    <div id="navegacao"></div>
-
-    <main class="container page-shell">
-        <section id="alertas">
-            <div class="page-heading">
-                <h2><i class="bi bi-exclamation-triangle-fill me-2"></i>Alertas de Risco</h2>
-                <p>Monitoramento das faltas não justificadas acumuladas no período letivo.</p>
-            </div>
-
-            <div class="status-note">
-                <i class="bi bi-plug me-2"></i>
-                Interface preparada para integração. Dados reais dependem dos endpoints da API.
-            </div>
-
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <span class="badge-risk" style="background:#E3F7EF;color:#198754">
-                                <i class="bi bi-check-circle me-2"></i>Regular
-                            </span>
-                            <p class="mt-3 mb-0">Abaixo de 20%</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-4">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <span class="badge-risk" style="background:#FFF1D9;color:#A46A17">
-                                <i class="bi bi-exclamation-circle me-2"></i>Preventivo
-                            </span>
-                            <p class="mt-3 mb-0">20% a menos de 25%</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-4">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <span class="badge-risk" style="background:#FFE8E1;color:#B94D39">
-                                <i class="bi bi-exclamation-triangle-fill me-2"></i>Crítico
-                            </span>
-                            <p class="mt-3 mb-0">25% ou mais</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card mt-4">
-                <div class="card-body">
-                    <h3 class="h5 fw-bold mb-3">Alertas identificados</h3>
-                    <div class="empty-state">
-                        <i class="bi bi-bell fs-2 d-block mb-3"></i>
-                        Alertas serão consultados pela API.
-                    </div>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-    <script src="js/config.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/layout.js"></script>
+  <div id="cabecalho"></div>
+  <div id="navegacao"></div>
+  <main class="container page-shell">
+    <section>
+      <div class="page-heading">
+        <h2><i class="bi bi-exclamation-triangle-fill me-2"></i>Alertas de Risco</h2>
+        <p>Alertas gerados pelo backend após o fechamento das frequências semanais.</p>
+      </div>
+      <div id="mensagemAlertas" role="status" aria-live="polite"></div>
+      <div class="row g-3 mb-4">
+        <div class="col-md-4">
+          <div class="card h-100"><div class="card-body">
+            <span class="badge-risk" style="background:#E3F7EF;color:#198754">Regular</span>
+            <p class="mt-3 mb-0">Menos de 20% de faltas não justificadas. Não gera novo alerta.</p>
+          </div></div>
+        </div>
+        <div class="col-md-4">
+          <div class="card h-100"><div class="card-body">
+            <span class="badge-risk" style="background:#FFF1D9;color:#A46A17">Preventivo</span>
+            <p class="mt-3 mb-0">De 20% até menos de 25%.</p>
+          </div></div>
+        </div>
+        <div class="col-md-4">
+          <div class="card h-100"><div class="card-body">
+            <span class="badge-risk" style="background:#FFE8E1;color:#B94D39">Crítico</span>
+            <p class="mt-3 mb-0">25% ou mais.</p>
+          </div></div>
+        </div>
+      </div>
+      <div class="card mb-4"><div class="card-body">
+        <h3 class="h5 fw-bold mb-3">Filtrar alertas</h3>
+        <form id="formFiltrosAlertas" class="row g-3">
+          <div class="col-md-6">
+            <label for="filtroAlunoAlerta" class="form-label">Aluno</label>
+            <select id="filtroAlunoAlerta" class="form-select"><option value="">Todos os alunos</option></select>
+          </div>
+          <div class="col-md-6">
+            <label for="filtroPeriodoAlerta" class="form-label">Período letivo</label>
+            <select id="filtroPeriodoAlerta" class="form-select"><option value="">Todos os períodos</option></select>
+          </div>
+          <div class="col-md-6">
+            <label for="filtroNivelAlerta" class="form-label">Nível</label>
+            <select id="filtroNivelAlerta" class="form-select">
+              <option value="">Todos os níveis</option>
+              <option value="PREVENTIVO">Preventivo</option>
+              <option value="CRITICO">Crítico</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label for="filtroSituacaoAlerta" class="form-label">Situação</label>
+            <select id="filtroSituacaoAlerta" class="form-select">
+              <option value="">Todas as situações</option>
+              <option value="ATIVO">Ativo</option>
+              <option value="RESOLVIDO">Resolvido</option>
+            </select>
+          </div>
+          <div class="col-12 d-flex flex-wrap gap-2">
+            <button type="submit" id="buscarAlertas" class="btn btn-primary">Aplicar filtros</button>
+            <button type="button" id="limparFiltrosAlertas" class="btn btn-outline-secondary">Limpar</button>
+            <button type="button" id="atualizarAlertas" class="btn btn-outline-primary">Atualizar</button>
+          </div>
+        </form>
+      </div></div>
+      <div class="card"><div class="card-body">
+        <div class="d-flex justify-content-between align-items-center gap-3 mb-3 flex-wrap">
+          <h3 class="h5 fw-bold mb-0">Alertas encontrados</h3>
+          <span id="contadorAlertas" class="text-secondary" aria-live="polite">Carregando...</span>
+        </div>
+        <div class="table-responsive"><table class="table align-middle">
+          <thead><tr>
+            <th>Aluno</th><th>Período</th><th>Faltas</th><th>Nível</th><th>Situação</th><th>Última atualização</th><th>Ações</th>
+          </tr></thead>
+          <tbody id="listaAlertas"><tr><td colspan="7" class="text-center">Carregando...</td></tr></tbody>
+        </table></div>
+        <p class="text-secondary small mt-3 mb-0">A resolução manual não registra um acompanhamento. Alertas resolvidos continuam no histórico da API.</p>
+      </div></div>
+    </section>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/layout.js"></script>
+  <script src="js/alertas.js"></script>
 </body>
 </html>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Minha Conta | EduAlerta</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="css/style.css" rel="stylesheet">
+</head>
+<body hidden>
+  <div id="cabecalho"></div>
+  <div id="navegacao"></div>
+  <main class="container page-shell">
+    <section>
+      <div class="page-heading">
+        <h2><i class="bi bi-person-circle me-2"></i>Minha Conta</h2>
+        <p>Consulte seus dados e altere seu nome de exibição.</p>
+      </div>
+      <div id="mensagemConta" role="status" aria-live="polite"></div>
+      <div class="card mb-4"><div class="card-body">
+        <h3 class="h5 fw-bold mb-3">Dados da conta</h3>
+        <dl class="row mb-4">
+          <dt class="col-sm-3">E-mail</dt><dd class="col-sm-9" id="emailConta">—</dd>
+          <dt class="col-sm-3">Perfil</dt><dd class="col-sm-9" id="perfilConta">—</dd>
+          <dt class="col-sm-3">Situação</dt><dd class="col-sm-9" id="statusConta">—</dd>
+        </dl>
+        <form id="formNomeConta">
+          <label for="nomeConta" class="form-label">Seu nome</label>
+          <input id="nomeConta" class="form-control" maxlength="150" required>
+          <button type="submit" id="salvarNomeConta" class="btn btn-primary mt-3">Salvar nome</button>
+        </form>
+      </div></div>
+      <div class="card"><div class="card-body">
+        <h3 class="h5 fw-bold mb-3">Desativar minha conta</h3>
+        <p class="text-secondary">Essa operação desativa seu acesso ao sistema. Será necessário procurar o administrador para verificar uma possível reativação.</p>
+        <button id="desativarMinhaConta" type="button" class="btn btn-outline-danger">Desativar minha conta</button>
+      </div></div>
+    </section>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/layout.js"></script>
+  <script src="js/minha-conta.js"></script>
+</body>
+</html>
