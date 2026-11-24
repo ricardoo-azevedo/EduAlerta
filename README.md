@@ -15,7 +15,7 @@ A consulta e a resolução manual de alertas já estão disponíveis na API. O r
 
 O sistema busca utilizar a tecnologia como ferramenta de apoio à gestão escolar e à prevenção da evasão, facilitando a identificação antecipada de situações que exigem atenção e o registro das intervenções realizadas pela instituição.
 
-> 🚧 **Status: Em desenvolvimento.** O backend possui autenticação, gerenciamento escolar, fechamento semanal, frequência por matrícula, cálculo percentual, geração/atualização automática e resolução manual de alertas. O frontend possui integração com autenticação, gestão escolar, usuários e fechamento/frequência semanal. A tela de alertas ainda não está integrada à API; acompanhamentos, notificações e relatórios ainda não foram implementados.
+> 🚧 **Status: Em desenvolvimento.** O backend possui autenticação, gerenciamento escolar, fechamento semanal, frequência por matrícula, consulta de frequência acumulada, cálculo percentual, geração/atualização automática e resolução manual de alertas. O frontend possui integração com autenticação, gestão escolar, usuários, fechamento/frequência semanal, consulta de frequência acumulada, painel de indicadores e consulta/gestão de alertas. Acompanhamentos, notificações, encaminhamentos e relatórios ainda não possuem implementação funcional.
 
 ---
 
@@ -75,6 +75,9 @@ O desenvolvimento do EduAlerta acontece de forma incremental. Esta seção apres
 - Gestão de períodos letivos integrada à API: cadastro, listagem, edição e alteração de status.
 - Gestão de fechamentos semanais e frequências integrada à API: criação e consulta de fechamentos, registro/edição/remoção de dias, lançamento/edição/remoção de frequências e fechamento definitivo da semana.
 - Layout compartilhado com identificação do usuário, perfil, navegação entre páginas e encerramento da sessão.
+- Painel integrado à API, com indicadores de alunos ativos, matrículas ativas, fechamentos concluídos e alertas ativos, além da exibição dos cinco alertas ativos mais recentes.
+- Tela de alertas integrada à API, com filtros por aluno, período letivo, nível e situação, exibição de percentual/motivo e resolução manual.
+- Tela de consulta de frequência integrada à API, com histórico de matrículas por aluno e consulta do acumulado de faltas não justificadas, aulas realizadas e percentual por matrícula.
 
 ### Ainda não implementado no backend
 
@@ -83,6 +86,7 @@ O desenvolvimento do EduAlerta acontece de forma incremental. Esta seção apres
 - Notificações e encaminhamentos.
 - Endpoints de dashboard e relatórios.
 - Associação da resolução manual de alertas a um registro de acompanhamento/intervenção. A resolução manual já existe, mas ainda não há entidade ou fluxo de acompanhamento vinculado a ela.
+- Cobertura abrangente de testes automatizados. No código atual, há apenas um teste de contexto (`contextLoads`); as regras de negócio e os endpoints ainda precisam de testes automatizados específicos.
 
 As seções seguintes distinguem as funcionalidades já disponíveis na API daquelas que permanecem apenas previstas na modelagem ou no escopo futuro.
 
@@ -129,12 +133,14 @@ As seções seguintes distinguem as funcionalidades já disponíveis na API daqu
 | Login (`index.html`) | Integrada | Autentica pelo Supabase Auth e consulta `/usuarios/me` para validar o acesso. |
 | Alterar senha (`alterar-senha.html`) | Integrada | Envia a nova senha para `PUT /usuarios/me/senha`. |
 | Usuários (`usuarios.html`) | Integrada | Lista usuários; ADM pode cadastrar secretarias, alterar nome e ativar/desativar contas. |
+| Minha conta (`minha-conta.html`) | Integrada | Consulta os dados da conta, permite atualizar o próprio nome e desativar a própria conta. |
 | Alunos (`alunos.html`) | Integrada | CRUD e alteração de status por meio de `/alunos`. |
 | Turmas (`turmas.html`) | Integrada | CRUD e alteração de status por meio de `/turmas`. |
 | Matrículas e períodos (`matriculas.html`) | Integrada | Cadastro, consulta, encerramento e transferência de matrículas; CRUD e status de períodos letivos. |
-| Painel (`painel.html`) | Apenas estrutura visual | Os indicadores exibem estado de espera e não consultam dados da API. |
+| Painel (`painel.html`) | Integrada | Consulta alunos, matrículas, fechamentos e alertas; calcula indicadores no frontend e exibe os cinco alertas ativos mais recentes. |
 | Frequência (`frequencias.html`) | Integrada | Gerencia fechamentos semanais, dias/aulas e frequências por matrícula usando os endpoints da API. |
-| Alertas (`alertas.html`) | Apenas estrutura visual | O backend já disponibiliza `GET /alertas`, mas a tela ainda não consulta os alertas reais. |
+| Consulta de frequência (`consulta-frequencia.html`) | Integrada | Consulta o histórico de matrículas de um aluno e solicita a frequência acumulada de cada matrícula. |
+| Alertas (`alertas.html`) | Integrada | Consulta alertas pela API, oferece filtros por aluno, período, nível e situação e permite resolver alertas ativos. |
 | Acompanhamentos (`acompanhamento.html`) | Apenas estrutura visual | Não registra intervenções nem notificações. |
 | Relatórios (`relatorios.html`) | Apenas estrutura visual | Não consulta nem consolida dados da API. |
 
@@ -210,6 +216,13 @@ Encerramento e transferência solicitam datas no formato `DD/MM/AAAA` e converte
 - A tela impede que a data final seja anterior à data inicial.
 - Listagem e alteração de status.
 
+**Consulta de frequência**
+
+- Carrega os alunos cadastrados.
+- Consulta o histórico de matrículas do aluno selecionado.
+- Exibe turma, datas de vínculo e status de cada matrícula.
+- Permite consultar, por matrícula, faltas não justificadas, aulas realizadas e percentual acumulado pelo endpoint `/matriculas/{id}/frequencia-acumulada`.
+
 **Frequência**
 
 - Consulta fechamentos com filtros por turma e período letivo.
@@ -219,9 +232,28 @@ Encerramento e transferência solicitam datas no formato `DD/MM/AAAA` e converte
 - Lançamento, edição e remoção de faltas não justificadas e justificadas por matrícula.
 - Fechamento definitivo da semana após as validações do backend.
 
+**Painel**
+
+- Consulta alunos, matrículas, fechamentos semanais e alertas em paralelo.
+- Calcula no frontend a quantidade de alunos ativos, matrículas ativas, fechamentos fechados e alertas ativos.
+- Exibe a quantidade de alertas críticos entre os ativos e até cinco alertas ativos recentes.
+
+**Alertas**
+
+- Carrega alunos e períodos letivos para preencher os filtros.
+- Consulta alertas com filtros opcionais por aluno, período letivo, nível e situação.
+- Exibe percentual de faltas, nível, situação, motivo e data de atualização.
+- Permite resolver manualmente alertas ativos, respeitando as permissões da API.
+
 **Usuários**
 
 - Listagem de nome, e-mail, perfil, status e situação da troca de senha.
+
+**Minha conta**
+
+- Consulta e exibe e-mail, perfil e status da conta autenticada.
+- Permite atualizar o próprio nome pelo endpoint `PUT /usuarios/me`.
+- Permite solicitar a desativação da própria conta pelo endpoint `DELETE /usuarios/me`.
 - Cadastro de secretarias.
 - Alteração de nome.
 - Ativação e desativação de contas.
@@ -1619,13 +1651,12 @@ As imagens construídas não são removidas, e os dados armazenados no Supabase 
 
 Com base no estado atual do desenvolvimento e no escopo funcional, as próximas etapas incluem:
 
-1. Integrar a tela de alertas do frontend ao endpoint `GET /alertas`.
-2. Implementar o cadastro e a associação de responsáveis, caso permaneçam no escopo da entrega.
-3. Implementar o registro de acompanhamentos e intervenções.
-4. Integrar o painel aos dados reais da API.
-5. Integrar as telas de acompanhamentos e relatórios aos módulos correspondentes.
-6. Ampliar a cobertura automatizada das regras de negócio e dos endpoints.
-7. Revisar a configuração de ambiente do frontend para separar a URL local da API da URL utilizada em publicação.
+1. Implementar o cadastro e a associação de responsáveis, caso permaneçam no escopo da entrega.
+2. Implementar o registro de acompanhamentos e intervenções, incluindo o vínculo com a resolução de alertas.
+3. Desenvolver notificações e, se priorizado, encaminhamentos.
+4. Implementar os endpoints e a integração de relatórios com dados reais.
+5. Ampliar a cobertura automatizada das regras de negócio e dos endpoints.
+6. Revisar a configuração de ambiente do frontend para separar a URL local da API da URL utilizada em publicação.
 
 ### Funcionalidades fora do escopo inicial
 
