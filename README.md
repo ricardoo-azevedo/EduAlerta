@@ -92,20 +92,6 @@ As seções seguintes distinguem as funcionalidades já disponíveis na API daqu
 
 ---
 
-## 🎯 Objetivos
-
-- Gerenciar alunos, turmas e matrículas.
-- Manter o histórico de vínculos dos alunos com as turmas.
-- Registrar semanalmente a quantidade de aulas realizadas em cada dia.
-- Registrar faltas e faltas justificadas dos alunos.
-- Acompanhar o percentual de faltas não justificadas por período letivo.
-- Identificar alunos com frequência irregular.
-- Gerar alertas preventivos e críticos.
-- Registrar intervenções realizadas pela instituição.
-- Manter o histórico de frequência, alertas e acompanhamentos.
-- Gerenciar os usuários internos por meio de perfis administrativos.
-- Auxiliar a secretaria na identificação de possíveis situações de evasão escolar.
-
 ## ⚙️ Funcionalidades e situação
 
 | Funcionalidade | Situação no backend | Descrição |
@@ -787,6 +773,29 @@ A resolução manual não recebe corpo JSON. O backend altera a situação para 
 
 Não existem endpoints para cadastrar, editar livremente ou excluir alertas. A geração e a atualização dos dados calculados são realizadas automaticamente durante o fechamento semanal; a resolução manual é realizada pelo endpoint acima.
 
+#### Cálculo e classificação de risco
+
+A classificação do alerta considera a combinação **aluno + período letivo**, e não uma matrícula isolada.
+
+| Percentual de faltas não justificadas | Resultado |
+|---|---|
+| Abaixo de 20% | Regular, sem alerta ativo. |
+| De 20% até abaixo de 25% | `PREVENTIVO`. |
+| 25% ou mais | `CRITICO`. |
+
+O percentual é calculado por:
+
+\[
+\text{Percentual} =
+\frac{\text{Faltas não justificadas}}{\text{Aulas realizadas}} \times 100
+\]
+
+Somente fechamentos `FECHADO` entram no cálculo. Faltas justificadas são excluídas, e as faltas não justificadas são acumuladas entre as matrículas do aluno no período letivo. O percentual é arredondado para duas casas decimais.
+
+Ao fechar uma semana, o backend cria ou atualiza o alerta do aluno no período correspondente, sem duplicar a combinação aluno/período. Se o percentual cair abaixo de 20%, um alerta existente passa para `RESOLVIDO` e deixa de ser marcado como resolução manual. Se um alerta tiver sido resolvido manualmente e o percentual continuar na faixa de risco, ele permanece resolvido manualmente. Um alerta resolvido automaticamente pode voltar a `ATIVO` se o aluno retornar a uma faixa de risco em um fechamento posterior.
+
+A consulta `/matriculas/{id}/frequencia-acumulada` possui outro recorte: calcula os totais de uma matrícula específica dentro do intervalo daquele vínculo.
+
 ### Endpoints ainda não implementados
 
 Os seguintes módulos não possuem controllers ou endpoints disponíveis no backend atual:
@@ -795,168 +804,6 @@ Os seguintes módulos não possuem controllers ou endpoints disponíveis no back
 - Acompanhamentos e intervenções.
 - Notificações e encaminhamentos.
 - Dashboard e relatórios.
-
----
-
-## 🧩 Regras de negócio já implementadas
-
-Esta seção reúne as validações e regras presentes nos módulos atualmente desenvolvidos.
-
-### Alunos
-
-- Nome obrigatório, com até 150 caracteres.
-- Data de nascimento obrigatória.
-- Aluno é criado ativo.
-- O status pode ser alterado sem excluir o registro.
-
-### Turmas
-
-- Nome obrigatório, com até 255 caracteres.
-- Ano letivo obrigatório e positivo.
-- O ano letivo não pode ser anterior ao ano corrente.
-- Turma é criada ativa.
-- O status pode ser alterado sem excluir o registro.
-
-### Períodos letivos
-
-- Nome obrigatório, com até 100 caracteres.
-- Ano letivo obrigatório e positivo.
-- Número do semestre limitado a `1` ou `2`.
-- Data inicial e data final são obrigatórias.
-- A data final não pode ser anterior à data inicial.
-- Período letivo é criado ativo.
-- O status pode ser alterado sem excluir o registro.
-
-### Matrículas
-
-- Relação entre aluno e turma com data de início, data final opcional e status.
-- Status possíveis: `ATIVA` e `ENCERRADA`.
-- Alunos inativos não podem receber novas matrículas.
-- Turmas inativas não podem receber novas matrículas.
-- Sobreposição de períodos de matrícula para o mesmo aluno é impedida.
-- Transferência preserva o histórico, encerrando o vínculo anterior e criando outro.
-- O encerramento e a transferência respeitam a ordem cronológica das datas.
-
-### Fechamentos semanais e frequência
-
-- A semana é identificada pela segunda-feira como data inicial; a data final corresponde ao domingo.
-- O fechamento pertence a uma turma, a um período letivo e ao usuário que o criou.
-- O fechamento inicia em `RASCUNHO` e pode ser alterado apenas nesse estado.
-- Os dias são registrados individualmente, com quantidade de aulas maior ou igual a zero; portanto, dias sem aula podem ser registrados explicitamente com `quantidadeAulas: 0`.
-- O mesmo dia não pode ser cadastrado duas vezes no mesmo fechamento.
-- A frequência é vinculada à matrícula, e não diretamente ao aluno, e separa `faltas` de `faltasJustificadas`.
-- A matrícula precisa pertencer à turma do fechamento e seu intervalo de vínculo precisa se sobrepor à semana.
-- A soma das duas categorias de faltas não pode exceder as aulas realizadas durante o intervalo em que a matrícula esteve vinculada naquela semana.
-- Para fechar a semana, todas as matrículas com vínculo sobreposto precisam possuir frequência registrada; os totais são validados novamente.
-- Um fechamento `FECHADO` torna-se imutável pelos endpoints de manutenção de dias e frequências.
-
-### Frequência acumulada, classificação de risco e alertas
-
-O backend possui dois cálculos relacionados, mas com finalidades e recortes diferentes:
-
-- `GET /matriculas/{id}/frequencia-acumulada` calcula a frequência acumulada de uma matrícula, considerando o intervalo do vínculo.
-- Ao fechar um fechamento semanal, o backend recalcula o percentual do aluno no período letivo daquele fechamento e atualiza o alerta correspondente.
-
-A classificação persistida no alerta é baseada na combinação **aluno + período letivo**, e não em uma matrícula isolada.
-
-| Percentual de faltas não justificadas | Classificação |
-|---|---|
-| Abaixo de 20% | Regular, sem alerta |
-| De 20% até abaixo de 25% | `PREVENTIVO` |
-| 25% ou mais | `CRITICO` |
-
-O cálculo utiliza a seguinte fórmula:
-
-\[
-\text{Percentual de faltas} =
-\frac{\text{Faltas não justificadas}}{\text{Aulas realizadas}} \times 100
-\]
-
-Regras aplicadas:
-
-- Somente fechamentos semanais com status `FECHADO` são considerados.
-- Fechamentos em `RASCUNHO` não entram no cálculo.
-- Faltas justificadas não são contabilizadas no percentual.
-- O denominador corresponde à quantidade de aulas efetivamente realizadas.
-- Para o endpoint de frequência acumulada, o recorte é o intervalo da matrícula e os fechamentos da turma vinculados a esse intervalo.
-- Para os alertas, são somadas as faltas não justificadas de todas as matrículas do aluno no período letivo, respeitando o vínculo da matrícula com a turma e o intervalo de matrícula.
-- Para os alertas, as aulas realizadas são somadas a partir dos registros diários dos fechamentos do período letivo, considerando a relação entre aluno, matrícula, turma e período.
-- O percentual é calculado com duas casas decimais e arredondamento `HALF_UP`; a classificação considera o percentual arredondado utilizado pelo serviço.
-
-A geração e a atualização dos alertas são executadas automaticamente ao fechar uma semana. Quando o percentual fica abaixo de 20%, o alerta existente permanece armazenado, mas sua situação passa para `RESOLVIDO` e `resolvidoManualmente` volta para `false`; portanto, o registro não é excluído. Quando o percentual permanece em uma faixa de risco, os dados calculados do registro existente são atualizados, sem duplicação. Se o alerta tiver sido resolvido manualmente e o percentual continuar em uma faixa de risco, ele permanece `RESOLVIDO` enquanto `resolvidoManualmente` estiver `true`.
-
-### Usuários
-
-- Não existe cadastro público.
-- O perfil de novas contas cadastradas pela API é definido como `SECRETARIA`.
-- Somente `ADM` pode cadastrar secretarias.
-- Somente `ADM` pode alterar o nome e o status de outras contas de secretaria.
-- As operações administrativas não permitem alterar a própria conta.
-- O usuário pode alterar o próprio nome após concluir a troca obrigatória de senha.
-- A troca de senha é realizada no Supabase Auth.
-- A senha temporária é gerada pelo backend e enviada por e-mail.
-- Contas inativas são bloqueadas.
-- O backend verifica o status e a situação da troca obrigatória de senha nas operações protegidas.
-
----
-
-## 📅 Controle de frequência — implementação atual
-
-O registro da frequência é realizado por meio de fechamentos semanais por turma. O fechamento reúne as informações dos dias letivos e as frequências dos alunos vinculados às matrículas correspondentes. A interface web já consome esses endpoints.
-
-### Informações registradas
-
-**Fechamento diário:**
-
-- Data do dia.
-- Quantidade de aulas efetivamente realizadas.
-
-**Frequência semanal por matrícula:**
-
-- Matrícula relacionada.
-- Quantidade de faltas não justificadas.
-- Quantidade de faltas justificadas.
-
-Dias sem aulas, feriados e suspensões devem ser registrados com `quantidadeAulas: 0`; o backend não infere feriados nem cria automaticamente os registros diários.
-
-### Status do fechamento
-
-| Status | Descrição |
-|---|---|
-| `RASCUNHO` | Registro ainda não concluído. Não participa do cálculo de frequência. |
-| `FECHADO` | Registro concluído e considerado nos cálculos do período letivo. |
-
-A separação entre fechamento e frequência permite consolidar as informações sem precisar cadastrar individualmente cada aula ministrada. O endpoint de frequência acumulada utiliza os fechamentos concluídos para calcular o percentual da matrícula.
-
-**Decisão de modelagem:** o sistema não utiliza uma entidade `AULA`. A quantidade de aulas realizadas será registrada por dia em `FECHAMENTO_DIA`, enquanto as faltas serão consolidadas por matrícula em `FREQUENCIA_SEMANAL`.
-
-As entidades `FechamentoSemanal`, `FechamentoDia` e `FrequenciaSemanal`, seus repositories, DTOs, services e controllers estão implementados no backend. A tela `frequencias.html` também está integrada aos endpoints de fechamento e frequência.
-
----
-
-## 🔔 Alertas e acompanhamentos
-
-A geração e a atualização de alertas estão implementadas no backend. Cada alerta é associado a um aluno e a um período letivo, com restrição de unicidade para essa combinação.
-
-### Funcionamento automático dos alertas
-
-1. A secretaria fecha um fechamento semanal.
-2. O backend valida os dias e as frequências registradas.
-3. O fechamento passa para `FECHADO`.
-4. Para cada aluno que possui frequência registrada naquele fechamento, o serviço recalcula o percentual acumulado no período letivo.
-5. O serviço cria ou atualiza o alerta correspondente conforme o resultado do cálculo. Se o percentual ficar abaixo de 20%, um alerta existente é marcado como `RESOLVIDO`; ele não é excluído.
-
-Quando um alerta existente permanece em uma faixa de risco, o mesmo registro é atualizado, sem duplicação. Se um alerta resolvido automaticamente voltar a atingir uma faixa de risco em um fechamento posterior, poderá voltar a `ATIVO`. Já um alerta resolvido manualmente permanece `RESOLVIDO` enquanto continuar marcado internamente como resolvido manualmente, mesmo que o percentual calculado continue na faixa de risco.
-
-O alerta armazena o aluno, o período letivo, o percentual, o nível (`PREVENTIVO` ou `CRITICO`), a situação (`ATIVO` ou `RESOLVIDO`), o indicador interno de resolução manual, o motivo descritivo e a data/hora da última atualização. A consulta é disponibilizada por `GET /alertas`, com filtros opcionais por aluno, período letivo, nível e situação. A resolução manual é disponibilizada por `PUT /alertas/{id}/resolver`.
-
-### Ainda pendente
-
-- Acompanhamentos e intervenções realizados pela instituição. A resolução manual do alerta já está implementada, mas ainda não é vinculada a um registro de acompanhamento.
-- Notificações relacionadas aos alertas.
-- Encaminhamentos, previstos como funcionalidade opcional.
-
-A entidade `ACOMPANHAMENTO` permanece prevista para registrar tipo de intervenção, descrição, resultado, data/hora e usuário responsável. A entidade `NOTIFICACAO` também permanece no escopo futuro; na primeira versão, não está prevista integração automática com WhatsApp.
 
 ---
 
@@ -1483,21 +1330,151 @@ Na execução local com Docker, a URL base da API deve apontar para:
 
 A chave utilizada no frontend deve ser a chave pública do Supabase. A chave administrativa ou `service_role` não deve ser colocada no frontend.
 
-### Usuário administrativo inicial
+### Criação inicial do banco de dados
 
-O EduAlerta não possui cadastro público de usuários.
+O backend utiliza `spring.jpa.hibernate.ddl-auto=validate`. Portanto, o Hibernate **não cria nem atualiza as tabelas**: o schema e as tabelas precisam existir antes de iniciar a aplicação.
 
-Para realizar o primeiro acesso, é necessário que exista previamente:
+No SQL Editor do Supabase, execute o script abaixo para criar a modelagem inicial correspondente às entidades atualmente implementadas no backend. O script contempla somente as tabelas funcionais existentes; responsáveis, acompanhamentos, notificações e encaminhamentos continuam fora desta primeira estrutura.
 
-- Uma identidade de usuário cadastrada no Supabase Auth.
-- Um registro correspondente na tabela `tb_usuario`.
-- O mesmo UUID do Supabase Auth armazenado em `auth_user_id`.
-- O perfil local configurado como `ADM`.
-- A conta em situação ativa.
+```sql
+CREATE SCHEMA IF NOT EXISTS app;
 
-Após o provisionamento inicial, o ADM poderá cadastrar novas contas de secretaria pela aplicação.
+-- Usuários locais vinculados às identidades do Supabase Auth.
+CREATE TABLE IF NOT EXISTS app.tb_usuario (
+    id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    auth_user_id UUID NOT NULL UNIQUE,
+    nome VARCHAR(150) NOT NULL,
+    email VARCHAR(254) NOT NULL UNIQUE,
+    perfil VARCHAR(255) NOT NULL,
+    ativo BOOLEAN NOT NULL,
+    alterar_senha_obrigatorio BOOLEAN NOT NULL
+);
 
-**Observação:** o Docker não cria automaticamente o usuário administrativo nem configura as credenciais dos serviços externos. Essas configurações precisam estar prontas antes da execução.
+CREATE TABLE IF NOT EXISTS app.tb_aluno (
+    id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    nome VARCHAR(150) NOT NULL,
+    data_nascimento DATE NOT NULL,
+    ativo BOOLEAN NOT NULL,
+    criado_em TIMESTAMP WITHOUT TIME ZONE NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS app.tb_turma (
+    id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    nome VARCHAR(255) NOT NULL,
+    ano_letivo INTEGER NOT NULL,
+    ativo BOOLEAN NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS app.tb_periodo_letivo (
+    id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    ano_letivo INTEGER NOT NULL,
+    numero_semestre INTEGER NOT NULL,
+    data_inicio DATE NOT NULL,
+    data_fim DATE NOT NULL,
+    ativo BOOLEAN NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS app.tb_matricula (
+    id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    aluno_id BIGINT NOT NULL REFERENCES app.tb_aluno(id),
+    turma_id BIGINT NOT NULL REFERENCES app.tb_turma(id),
+    data_inicio DATE NOT NULL,
+    data_fim DATE,
+    status VARCHAR(20) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS app.tb_fechamento_semanal (
+    id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    turma_id BIGINT NOT NULL REFERENCES app.tb_turma(id),
+    periodo_letivo_id BIGINT NOT NULL REFERENCES app.tb_periodo_letivo(id),
+    usuario_id BIGINT NOT NULL REFERENCES app.tb_usuario(id),
+    data_inicio_semana DATE NOT NULL,
+    data_fim_semana DATE NOT NULL,
+    status VARCHAR(20) NOT NULL,
+    CONSTRAINT uk_fechamento_turma_periodo_semana
+        UNIQUE (turma_id, periodo_letivo_id, data_inicio_semana)
+);
+
+CREATE TABLE IF NOT EXISTS app.tb_fechamento_dia (
+    id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    fechamento_semanal_id BIGINT NOT NULL
+        REFERENCES app.tb_fechamento_semanal(id),
+    data DATE NOT NULL,
+    quantidade_aulas INTEGER NOT NULL,
+    CONSTRAINT uk_fechamento_dia_data
+        UNIQUE (fechamento_semanal_id, data)
+);
+
+CREATE TABLE IF NOT EXISTS app.tb_frequencia_semanal (
+    id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    fechamento_semanal_id BIGINT NOT NULL
+        REFERENCES app.tb_fechamento_semanal(id),
+    matricula_id BIGINT NOT NULL REFERENCES app.tb_matricula(id),
+    faltas INTEGER NOT NULL,
+    faltas_justificadas INTEGER NOT NULL,
+    CONSTRAINT uk_frequencia_fechamento_matricula
+        UNIQUE (fechamento_semanal_id, matricula_id)
+);
+
+CREATE TABLE IF NOT EXISTS app.tb_alerta (
+    id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    aluno_id BIGINT NOT NULL REFERENCES app.tb_aluno(id),
+    periodo_letivo_id BIGINT NOT NULL REFERENCES app.tb_periodo_letivo(id),
+    percentual_faltas NUMERIC(5, 2) NOT NULL,
+    nivel VARCHAR(20) NOT NULL,
+    situacao VARCHAR(20) NOT NULL,
+    resolvido_manualmente BOOLEAN NOT NULL,
+    motivo VARCHAR(500) NOT NULL,
+    atualizado_em TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+    CONSTRAINT uk_alerta_aluno_periodo
+        UNIQUE (aluno_id, periodo_letivo_id)
+);
+```
+
+> Execute o script em um projeto Supabase novo ou em um schema `app` ainda não inicializado. `CREATE TABLE IF NOT EXISTS` não atualiza tabelas antigas: se já existir uma estrutura anterior, compare-a com o modelo e aplique as migrações necessárias antes de iniciar o backend.
+
+### Criação do usuário ADM inicial
+
+O primeiro administrador precisa existir em dois lugares: como identidade no **Supabase Auth** e como registro local em `app.tb_usuario`. O `auth_user_id` deve corresponder ao UUID da identidade criada no Supabase.
+
+1. No painel do Supabase, acesse **Authentication → Users** e crie o usuário administrador com o e-mail desejado e uma senha inicial forte.
+2. No SQL Editor, execute o comando abaixo, substituindo o e-mail e o nome pelos dados utilizados na criação da identidade:
+
+```sql
+INSERT INTO app.tb_usuario (
+    auth_user_id,
+    nome,
+    email,
+    perfil,
+    ativo,
+    alterar_senha_obrigatorio
+)
+SELECT
+    id,
+    'Administrador EduAlerta',
+    email,
+    'ADM',
+    TRUE,
+    FALSE
+FROM auth.users
+WHERE email = 'admin@edualerta.com'
+ON CONFLICT (auth_user_id) DO NOTHING;
+```
+
+3. Confirme se o registro foi criado:
+
+```sql
+SELECT id, auth_user_id, nome, email, perfil, ativo
+FROM app.tb_usuario
+WHERE perfil = 'ADM';
+```
+
+O exemplo utiliza `admin@edualerta.com` apenas como endereço ilustrativo. Ele deve ser igual ao e-mail da identidade cadastrada no Supabase Auth. A senha não é armazenada em `app.tb_usuario`: a autenticação e o gerenciamento de credenciais são responsabilidade do Supabase Auth.
+
+Após o provisionamento, o ADM poderá cadastrar as contas de `SECRETARIA` pela aplicação. Não crie o administrador diretamente apenas em `app.tb_usuario`, pois isso não cria a identidade necessária para autenticação.
+
+**Importante:** o Docker não cria o schema, as tabelas nem o usuário administrativo. Essa preparação deve ser concluída antes de iniciar os containers.
 
 ---
 
@@ -1517,7 +1494,6 @@ Antes de executar o projeto, é necessário possuir:
 - Projeto Supabase configurado.
 - Arquivo `application.properties` devidamente preenchido.
 - Arquivo `js/config.js` devidamente preenchido.
-- Usuário administrativo previamente cadastrado no Supabase Auth e vinculado ao registro correspondente em `tb_usuario`.
 
 Não é necessário instalar Java, Maven ou configurar um servidor HTTP para o frontend na máquina host. O Docker utiliza as imagens e configurações do próprio projeto.
 
@@ -1536,7 +1512,7 @@ Antes de iniciar a aplicação, configure os arquivos descritos na seção [Conf
 - `back-end/edualerta/src/main/resources/application.properties`
 - `frontend/js/config.js`
 
-Confira também se o usuário administrativo inicial já foi provisionado no Supabase Auth e possui o registro correspondente na tabela `tb_usuario`.
+Confira também se o schema, as tabelas e o usuário ADM inicial foram preparados conforme a seção [Configuração do projeto](#-configuração-do-projeto).
 
 ### 3. Construa as imagens e inicie a aplicação
 
