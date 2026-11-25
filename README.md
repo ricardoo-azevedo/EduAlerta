@@ -6,11 +6,11 @@ O EduAlerta é uma aplicação web desenvolvida com o objetivo de auxiliar insti
 
 A plataforma permite organizar os dados escolares, gerenciar alunos, turmas, matrículas e períodos letivos. O backend também permite criar e fechar semanas por turma, registrar aulas realizadas por dia, lançar faltas não justificadas e justificadas por matrícula, consultar a frequência acumulada de uma matrícula e gerar ou atualizar automaticamente alertas por aluno e período letivo quando um fechamento semanal é concluído.
 
-A consulta e a resolução manual de alertas já estão disponíveis na API. O registro de acompanhamentos, notificações e relatórios permanece em desenvolvimento.
+A consulta e a resolução manual de alertas estão disponíveis na API. O registro e a consulta do histórico de acompanhamentos também estão implementados no backend e integrados à tela correspondente do frontend. Notificações e relatórios permanecem em desenvolvimento.
 
 O sistema busca utilizar a tecnologia como ferramenta de apoio à gestão escolar e à prevenção da evasão, facilitando a identificação antecipada de situações que exigem atenção e o registro das intervenções realizadas pela instituição.
 
-> 🚧 **Status: Em desenvolvimento.** O backend possui autenticação, gerenciamento escolar, fechamento semanal, frequência por matrícula, consulta de frequência acumulada, cálculo percentual, geração/atualização automática e resolução manual de alertas. O frontend possui integração com autenticação, gestão escolar, usuários, fechamento/frequência semanal, consulta de frequência acumulada, painel de indicadores e consulta/gestão de alertas. Acompanhamentos, notificações, encaminhamentos e relatórios ainda não possuem implementação funcional.
+> 🚧 **Status: Em desenvolvimento.** O backend possui autenticação, gerenciamento escolar, fechamento semanal, frequência por matrícula, consulta de frequência acumulada, cálculo percentual, geração/atualização automática e resolução manual de alertas, além do cadastro e consulta de acompanhamentos vinculados aos alertas. O frontend possui integração com autenticação, gestão escolar, usuários, fechamento/frequência semanal, consulta de frequência acumulada, painel de indicadores, consulta/gestão de alertas e registro/consulta do histórico de acompanhamentos. Notificações, encaminhamentos e relatórios ainda não possuem implementação funcional.
 
 ---
 
@@ -53,6 +53,9 @@ O desenvolvimento do EduAlerta acontece de forma incremental. Esta seção apres
 - Geração e atualização automática de alertas ao fechar uma semana.
 - Consulta de alertas com filtros opcionais por aluno, período letivo, nível e situação.
 - Resolução manual de alertas por meio de endpoint próprio, disponível para os perfis `ADM` e `SECRETARIA`.
+- Cadastro de acompanhamentos vinculados a um alerta e ao usuário autenticado, com tipo, descrição, resultado e data/hora.
+- Consulta do histórico de acompanhamentos por alerta, ordenado do mais recente para o mais antigo.
+- Atualização automática do alerta para `RESOLVIDO` após cada novo acompanhamento.
 
 ### Implementado ou integrado no frontend
 
@@ -72,15 +75,14 @@ O desenvolvimento do EduAlerta acontece de forma incremental. Esta seção apres
 - Layout compartilhado com identificação do usuário, perfil, navegação entre páginas e encerramento da sessão.
 - Painel integrado à API, com indicadores de alunos ativos, matrículas ativas, fechamentos concluídos e alertas ativos, além da exibição dos cinco alertas ativos mais recentes.
 - Tela de alertas integrada à API, com filtros por aluno, período letivo, nível e situação, exibição de percentual/motivo e resolução manual.
+- Tela de acompanhamentos integrada à API, com seleção de alerta, registro de intervenção e consulta do histórico, incluindo usuário responsável e data/hora.
 - Tela de consulta de frequência integrada à API, com histórico de matrículas por aluno e consulta do acumulado de faltas não justificadas, aulas realizadas e percentual por matrícula.
 
 ### Ainda não implementado no backend
 
 - Cadastro e associação de responsáveis.
-- Registro de acompanhamentos e intervenções.
 - Notificações e encaminhamentos.
 - Endpoints de dashboard e relatórios.
-- Associação da resolução manual de alertas a um registro de acompanhamento/intervenção. A resolução manual já existe, mas ainda não há entidade ou fluxo de acompanhamento vinculado a ela.
 - Cobertura abrangente de testes automatizados. No código atual, há apenas um teste de contexto (`contextLoads`); as regras de negócio e os endpoints ainda precisam de testes automatizados específicos.
 
 As seções seguintes distinguem as funcionalidades já disponíveis na API daquelas que permanecem apenas previstas na modelagem ou no escopo futuro.
@@ -103,7 +105,7 @@ As seções seguintes distinguem as funcionalidades já disponíveis na API daqu
 | Frequência acumulada | Implementada | Consulta do total de faltas não justificadas, aulas realizadas e percentual da matrícula. |
 | Classificação de risco | Implementada | Classificação automática por aluno e período letivo. |
 | Alertas | Implementada | Geração/atualização automática ao fechar semanas, consulta com filtros por aluno, período, nível e situação, além de resolução manual. |
-| Acompanhamentos | Pendente | Registro das intervenções realizadas pela instituição. |
+| Acompanhamentos | Implementada | Cadastro e consulta do histórico de intervenções por alerta, com vínculo ao usuário autenticado e resolução automática do alerta. |
 | Notificações | Pendente | Registro de notificações relacionadas aos alertas. |
 | Encaminhamentos | Opcional | Registro de possíveis encaminhamentos relacionados aos alertas. |
 
@@ -122,7 +124,7 @@ As seções seguintes distinguem as funcionalidades já disponíveis na API daqu
 | Frequência (`frequencias.html`) | Integrada | Gerencia fechamentos semanais, dias/aulas e frequências por matrícula usando os endpoints da API. |
 | Consulta de frequência (`consulta-frequencia.html`) | Integrada | Consulta o histórico de matrículas de um aluno e solicita a frequência acumulada de cada matrícula. |
 | Alertas (`alertas.html`) | Integrada | Consulta alertas pela API, oferece filtros por aluno, período, nível e situação e permite resolver alertas ativos. |
-| Acompanhamentos (`acompanhamento.html`) | Apenas estrutura visual | Não registra intervenções nem notificações. |
+| Acompanhamentos (`acompanhamento.html`) | Integrada | Permite selecionar um alerta, registrar intervenções e consultar o histórico vinculado ao alerta. |
 | Relatórios (`relatorios.html`) | Apenas estrutura visual | Não consulta nem consolida dados da API. |
 
 ---
@@ -267,7 +269,7 @@ Cada perfil possui permissões específicas, definidas no backend.
 | Registrar e fechar frequências | Sim | Sim |
 | Consultar alertas | Sim | Sim |
 | Resolver alertas manualmente | Sim | Sim |
-| Registrar acompanhamentos | Futuro | Futuro |
+| Registrar acompanhamentos | Sim | Sim |
 
 ### ADM
 
@@ -295,11 +297,9 @@ Suas permissões atuais incluem:
 - Registrar e fechar frequências semanais.
 - Consultar alertas.
 - Resolver alertas manualmente.
+- Registrar acompanhamentos e consultar o histórico de intervenções.
 
-Para os módulos futuros, também está prevista a possibilidade de:
-
-- Cadastrar e associar responsáveis.
-- Registrar acompanhamentos e intervenções.
+Para os módulos futuros, também está prevista a possibilidade de cadastrar e associar responsáveis.
 
 A secretaria não pode cadastrar novos usuários, alterar o nome de outras secretarias ou modificar o status de suas contas.
 
@@ -768,6 +768,27 @@ A resolução manual não recebe corpo JSON. O backend altera a situação para 
 
 Não existem endpoints para cadastrar, editar livremente ou excluir alertas. A geração e a atualização dos dados calculados são realizadas automaticamente durante o fechamento semanal; a resolução manual é realizada pelo endpoint acima.
 
+### Acompanhamentos — `/alertas/{alertaId}/acompanhamentos`
+
+| Método | Endpoint | Descrição | Regra de acesso |
+|---|---|---|---|
+| `POST` | `/alertas/{alertaId}/acompanhamentos` | Registra uma intervenção vinculada ao alerta e ao usuário autenticado. A operação marca o alerta como `RESOLVIDO`. | `ADM` e `SECRETARIA`. |
+| `GET` | `/alertas/{alertaId}/acompanhamentos` | Lista o histórico de intervenções do alerta, da mais recente para a mais antiga. | `ADM` e `SECRETARIA`. |
+
+Corpo esperado para `POST`:
+
+```json
+{
+  "tipoIntervencao": "CONTATO_RESPONSAVEL",
+  "descricao": "Responsável foi contatado para conversar sobre as faltas do aluno.",
+  "resultado": "Responsável informou que irá acompanhar a frequência."
+}
+```
+
+Os três campos são obrigatórios. `tipoIntervencao` aceita até 50 caracteres; `descricao` e `resultado`, até 1000 caracteres cada. O backend registra automaticamente a data/hora e identifica o usuário pelo JWT, sem receber `usuarioId` no corpo da requisição.
+
+A consulta retorna `id`, `alertaId`, `usuarioId`, `usuarioNome`, `dataHora`, `tipoIntervencao`, `descricao` e `resultado`. Se o alerta não existir, a API retorna `404`. O histórico pode conter várias intervenções para o mesmo alerta, inclusive depois de ele já estar resolvido. Cada novo registro mantém o alerta em `RESOLVIDO` e atualiza `atualizadoEm`.
+
 #### Cálculo e classificação de risco
 
 A classificação do alerta considera a combinação **aluno + período letivo**, e não uma matrícula isolada.
@@ -796,7 +817,6 @@ A consulta `/matriculas/{id}/frequencia-acumulada` possui outro recorte: calcula
 Os seguintes módulos não possuem controllers ou endpoints disponíveis no backend atual:
 
 - Responsáveis e associação entre responsáveis e alunos.
-- Acompanhamentos e intervenções.
 - Notificações e encaminhamentos.
 - Dashboard e relatórios.
 
@@ -924,6 +944,7 @@ As entidades JPA presentes no backend documentado mapeiam as seguintes tabelas:
 | `app.tb_fechamento_dia` | `FechamentoDia` | Data e quantidade de aulas realizadas em cada dia do fechamento. |
 | `app.tb_frequencia_semanal` | `FrequenciaSemanal` | Faltas não justificadas e justificadas por matrícula e fechamento semanal. |
 | `app.tb_alerta` | `Alerta` | Percentual acumulado, nível, situação, indicador de resolução manual, motivo e data de atualização do alerta por aluno e período letivo. |
+| `app.tb_acompanhamento` | `Acompanhamento` | Intervenção vinculada a um alerta e ao usuário que a registrou, com data/hora, tipo, descrição e resultado. |
 
 **Observação sobre schemas:** a entidade `Usuario` está mapeada sem declaração explícita de schema na anotação `@Table`. As demais entidades acima declaram o schema `app` no código apresentado. A localização efetiva de `tb_usuario` também depende das propriedades de conexão e configuração JPA.
 
@@ -1200,11 +1221,10 @@ erDiagram
 |---|---|
 | `RESPONSAVEL` | Armazena os dados dos responsáveis pelos alunos. |
 | `ALUNO_RESPONSAVEL` | Relaciona alunos e responsáveis. |
-| `ACOMPANHAMENTO` | Registra as intervenções realizadas pela instituição. |
 | `NOTIFICACAO` | Mantém os registros de notificações relacionadas aos alertas. |
 | `ENCAMINHAMENTO` | Representa possíveis encaminhamentos relacionados aos alertas. |
 
-A entidade `ALERTA` já possui implementação no backend, incluindo model, repository, service e controller para consulta e resolução manual. A resolução manual altera a situação do alerta e não cria, por si só, um registro de acompanhamento.
+A entidade `ACOMPANHAMENTO` está implementada e mantém relacionamentos muitos-para-um com `ALERTA` e `USUARIO`. A resolução manual de um alerta continua sendo uma operação independente e não cria automaticamente um acompanhamento.
 
 ### Decisões importantes da modelagem
 
@@ -1329,7 +1349,7 @@ A chave utilizada no frontend deve ser a chave pública do Supabase. A chave adm
 
 O backend utiliza `spring.jpa.hibernate.ddl-auto=validate`. Portanto, o Hibernate **não cria nem atualiza as tabelas**: o schema e as tabelas precisam existir antes de iniciar a aplicação.
 
-No SQL Editor do Supabase, execute o script abaixo para criar a modelagem inicial correspondente às entidades atualmente implementadas no backend. O script contempla somente as tabelas funcionais existentes; responsáveis, acompanhamentos, notificações e encaminhamentos continuam fora desta primeira estrutura.
+No SQL Editor do Supabase, execute o script abaixo para criar a modelagem inicial correspondente às entidades atualmente implementadas no backend. O script contempla as tabelas funcionais existentes, incluindo `tb_acompanhamento`; responsáveis, notificações e encaminhamentos continuam fora desta primeira estrutura.
 
 ```sql
 CREATE SCHEMA IF NOT EXISTS app;
@@ -1425,6 +1445,21 @@ CREATE TABLE IF NOT EXISTS app.tb_alerta (
     CONSTRAINT uk_alerta_aluno_periodo
         UNIQUE (aluno_id, periodo_letivo_id)
 );
+
+CREATE TABLE IF NOT EXISTS app.tb_acompanhamento (
+    id BIGINT GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    alerta_id BIGINT NOT NULL REFERENCES app.tb_alerta(id),
+    usuario_id BIGINT NOT NULL REFERENCES app.tb_usuario(id),
+    data_hora TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+    tipo_intervencao VARCHAR(50) NOT NULL,
+    descricao VARCHAR(1000) NOT NULL,
+    resultado VARCHAR(1000) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_acompanhamento_alerta
+    ON app.tb_acompanhamento(alerta_id);
+CREATE INDEX IF NOT EXISTS idx_acompanhamento_usuario
+    ON app.tb_acompanhamento(usuario_id);
 ```
 
 > Execute o script em um projeto Supabase novo ou em um schema `app` ainda não inicializado. `CREATE TABLE IF NOT EXISTS` não atualiza tabelas antigas: se já existir uma estrutura anterior, compare-a com o modelo e aplique as migrações necessárias antes de iniciar o backend.
@@ -1623,11 +1658,10 @@ As imagens construídas não são removidas, e os dados armazenados no Supabase 
 Com base no estado atual do desenvolvimento e no escopo funcional, as próximas etapas incluem:
 
 1. Implementar o cadastro e a associação de responsáveis, caso permaneçam no escopo da entrega.
-2. Implementar o registro de acompanhamentos e intervenções, incluindo o vínculo com a resolução de alertas.
-3. Desenvolver notificações e, se priorizado, encaminhamentos.
-4. Implementar os endpoints e a integração de relatórios com dados reais.
-5. Ampliar a cobertura automatizada das regras de negócio e dos endpoints.
-6. Revisar a configuração de ambiente do frontend para separar a URL local da API da URL utilizada em publicação.
+2. Desenvolver notificações e, se priorizado, encaminhamentos.
+3. Implementar os endpoints e a integração de relatórios com dados reais.
+4. Ampliar a cobertura automatizada das regras de negócio e dos endpoints, incluindo acompanhamentos.
+5. Revisar a configuração de ambiente do frontend para separar a URL local da API da URL utilizada em publicação.
 
 ### Funcionalidades fora do escopo inicial
 
