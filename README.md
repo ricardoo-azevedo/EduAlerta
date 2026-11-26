@@ -956,14 +956,20 @@ O diagrama abaixo representa os relacionamentos JPA implementados no backend atu
 erDiagram
     ALUNO ||--o{ MATRICULA : possui
     TURMA ||--o{ MATRICULA : recebe
+
     TURMA ||--o{ FECHAMENTO_SEMANAL : possui
     PERIODO_LETIVO ||--o{ FECHAMENTO_SEMANAL : organiza
     USUARIO ||--o{ FECHAMENTO_SEMANAL : registra
+
     FECHAMENTO_SEMANAL ||--o{ FECHAMENTO_DIA : detalha
     FECHAMENTO_SEMANAL ||--o{ FREQUENCIA_SEMANAL : contem
     MATRICULA ||--o{ FREQUENCIA_SEMANAL : recebe
+
     ALUNO ||--o{ ALERTA : possui
     PERIODO_LETIVO ||--o{ ALERTA : classifica
+
+    ALERTA ||--o{ ACOMPANHAMENTO : possui
+    USUARIO ||--o{ ACOMPANHAMENTO : registra
 
     ALUNO {
         bigint id PK
@@ -1044,6 +1050,16 @@ erDiagram
         boolean resolvido_manualmente
         string motivo
         datetime atualizado_em
+    }
+
+    ACOMPANHAMENTO {
+        bigint id PK
+        bigint alerta_id FK
+        bigint usuario_id FK
+        datetime data_hora
+        string tipo_intervencao
+        string descricao
+        string resultado
     }
 ```
 
