@@ -3,7 +3,7 @@
 
 ---
 
-# 🎓 EduAlerta
+# EduAlerta
 
 **Sistema de monitoramento de frequência escolar e identificação de risco de evasão.**
 
@@ -15,11 +15,11 @@ A consulta e a resolução manual de alertas estão disponíveis na API. O regis
 
 O sistema busca utilizar a tecnologia como ferramenta de apoio à gestão escolar e à prevenção da evasão, facilitando a identificação antecipada de situações que exigem atenção e o registro das intervenções realizadas pela instituição.
 
-> 🚧 **Status: Em desenvolvimento.** O backend possui autenticação, gerenciamento escolar, fechamento semanal, frequência por matrícula, consulta de frequência acumulada, cálculo percentual, geração/atualização automática e resolução manual de alertas, além do cadastro e consulta de acompanhamentos vinculados aos alertas. O frontend possui integração com autenticação, gestão escolar, usuários, fechamento/frequência semanal, consulta de frequência acumulada, painel de indicadores, consulta/gestão de alertas e registro/consulta do histórico de acompanhamentos. Notificações, encaminhamentos e relatórios ainda não possuem implementação funcional.
+>  **Status: Em desenvolvimento.** O backend possui autenticação, gerenciamento escolar, fechamento semanal, frequência por matrícula, consulta de frequência acumulada, cálculo percentual, geração/atualização automática e resolução manual de alertas, além do cadastro e consulta de acompanhamentos vinculados aos alertas. O frontend possui integração com autenticação, gestão escolar, usuários, fechamento/frequência semanal, consulta de frequência acumulada, painel de indicadores, consulta/gestão de alertas e registro/consulta do histórico de acompanhamentos. Notificações, encaminhamentos e relatórios ainda não possuem implementação funcional.
 
 ---
 
-## 👥 Integrantes do projeto
+## Integrantes do projeto
 
 - José Ricardo
 - Francileidy Conceição
@@ -30,7 +30,7 @@ O sistema busca utilizar a tecnologia como ferramenta de apoio à gestão escola
 
 ---
 
-## 📌 Estado atual do desenvolvimento
+## Estado atual do desenvolvimento
 
 O desenvolvimento do EduAlerta acontece de forma incremental. Esta seção apresenta o estado dos módulos considerando o backend e o frontend disponíveis no projeto.
 
@@ -94,7 +94,7 @@ As seções seguintes distinguem as funcionalidades já disponíveis na API daqu
 
 ---
 
-## ⚙️ Funcionalidades e situação
+## Funcionalidades e situação
 
 | Funcionalidade | Situação no backend | Descrição |
 |---|---|---|
@@ -134,7 +134,7 @@ As seções seguintes distinguem as funcionalidades já disponíveis na API daqu
 
 ---
 
-## 🖥️ Frontend — funcionamento atual
+## Frontend — funcionamento atual
 
 O frontend é uma aplicação web estática construída com HTML, CSS, Bootstrap e JavaScript puro.
 
@@ -249,7 +249,7 @@ Encerramento e transferência solicitam datas no formato `DD/MM/AAAA` e converte
 
 ---
 
-## 🔐 Perfis e permissões de acesso
+## Perfis e permissões de acesso
 
 O código atual possui dois perfis definidos no enum `Perfil`:
 
@@ -363,7 +363,7 @@ Alunos e responsáveis não possuem acesso autenticado ao sistema na primeira ve
 
 ---
 
-## 🌐 API REST — Endpoints implementados
+## API REST — Endpoints implementados
 
 **Base URL local:** `http://localhost:9000`
 
@@ -827,7 +827,7 @@ Os seguintes módulos não possuem controllers ou endpoints disponíveis no back
 
 ---
 
-## 🛠️ Tecnologias
+## Tecnologias
 
 ### Backend
 
@@ -878,7 +878,7 @@ Os seguintes módulos não possuem controllers ou endpoints disponíveis no back
 
 ---
 
-## 🏗️ Arquitetura
+## Arquitetura
 
 O EduAlerta utiliza uma arquitetura cliente-servidor. O frontend consome os endpoints REST disponibilizados pelo backend, enquanto o Spring Boot concentra as regras de negócio e a comunicação com o banco de dados.
 
@@ -928,7 +928,7 @@ O banco de dados não é executado em container: a aplicação utiliza o Postgre
 
 ---
 
-## 🗄️ Banco de dados
+## Banco de dados
 
 O banco de dados utiliza PostgreSQL hospedado pelo Supabase.
 
@@ -961,14 +961,20 @@ O diagrama abaixo representa os relacionamentos JPA implementados no backend atu
 erDiagram
     ALUNO ||--o{ MATRICULA : possui
     TURMA ||--o{ MATRICULA : recebe
+
     TURMA ||--o{ FECHAMENTO_SEMANAL : possui
     PERIODO_LETIVO ||--o{ FECHAMENTO_SEMANAL : organiza
     USUARIO ||--o{ FECHAMENTO_SEMANAL : registra
+
     FECHAMENTO_SEMANAL ||--o{ FECHAMENTO_DIA : detalha
     FECHAMENTO_SEMANAL ||--o{ FREQUENCIA_SEMANAL : contem
     MATRICULA ||--o{ FREQUENCIA_SEMANAL : recebe
+
     ALUNO ||--o{ ALERTA : possui
     PERIODO_LETIVO ||--o{ ALERTA : classifica
+
+    ALERTA ||--o{ ACOMPANHAMENTO : possui
+    USUARIO ||--o{ ACOMPANHAMENTO : registra
 
     ALUNO {
         bigint id PK
@@ -1049,6 +1055,16 @@ erDiagram
         boolean resolvido_manualmente
         string motivo
         datetime atualizado_em
+    }
+
+    ACOMPANHAMENTO {
+        bigint id PK
+        bigint alerta_id FK
+        bigint usuario_id FK
+        datetime data_hora
+        string tipo_intervencao
+        string descricao
+        string resultado
     }
 ```
 
@@ -1263,7 +1279,7 @@ O alerta representa a situação identificada pelo sistema. O acompanhamento rep
 
 ---
 
-## 📧 Envio de e-mails
+## Envio de e-mails
 
 O envio de e-mails é realizado pelo backend utilizando o Gmail SMTP, por meio do `JavaMailSender`.
 
@@ -1283,7 +1299,7 @@ O envio depende de credenciais válidas configuradas na aplicação.
 
 ---
 
-## ⚙️ Configuração do projeto
+## Configuração do projeto
 
 Antes de executar o EduAlerta, é necessário configurar os arquivos responsáveis pela conexão do backend e do frontend com os serviços externos.
 
@@ -1513,7 +1529,7 @@ Após o provisionamento, o ADM poderá cadastrar as contas de `SECRETARIA` pela 
 
 ---
 
-## 🚀 Executando o projeto com Docker
+## Executando o projeto com Docker
 
 O EduAlerta utiliza Docker Compose para executar o backend e o frontend simultaneamente.
 
@@ -1542,12 +1558,12 @@ Após obter os arquivos, abra a pasta principal do EduAlerta.
 
 ### 2. Configure o backend e o frontend
 
-Antes de iniciar a aplicação, configure os arquivos descritos na seção [Configuração do projeto](#-configuração-do-projeto):
+Antes de iniciar a aplicação, configure os arquivos descritos na seção [Configuração do projeto](#configuração-do-projeto):
 
 - `back-end/edualerta/src/main/resources/application.properties`
 - `frontend/js/config.js`
 
-Confira também se o schema, as tabelas e o usuário ADM inicial foram preparados conforme a seção [Configuração do projeto](#-configuração-do-projeto).
+Confira também se o schema, as tabelas e o usuário ADM inicial foram preparados conforme a seção [Configuração do projeto](#configuração-do-projeto).
 
 ### 3. Construa as imagens e inicie a aplicação
 
@@ -1607,8 +1623,6 @@ Com os containers em execução, abra o navegador e acesse:
 
 A autenticação é realizada pelo Supabase Auth. Para acessar o sistema, é necessário possuir uma conta previamente provisionada no Supabase Auth e vinculada ao registro correspondente na tabela `tb_usuario`.
 
-O banco de dados utilizado continua sendo o PostgreSQL hospedado no Supabase.
-
 ### 6. Inicie novamente o projeto
 
 Depois que as imagens já tiverem sido construídas, não é necessário executar o processo de construção novamente caso não existam alterações que exijam um novo build.
@@ -1658,7 +1672,7 @@ As imagens construídas não são removidas, e os dados armazenados no Supabase 
 
 ---
 
-## 🧭 Próximas etapas do projeto
+## Próximas etapas do projeto
 
 Com base no estado atual do desenvolvimento e no escopo funcional, as próximas etapas incluem:
 
@@ -1681,7 +1695,7 @@ A entidade `ENCAMINHAMENTO` permanece prevista na modelagem como funcionalidade 
 
 ---
 
-## 📖 Sobre o projeto
+## Sobre o projeto
 
 O EduAlerta é um projeto acadêmico desenvolvido no contexto do curso de Análise e Desenvolvimento de Sistemas, com foco na aplicação prática de conceitos de engenharia de software, desenvolvimento web, modelagem de dados, APIs REST, autenticação e persistência de dados.
 
