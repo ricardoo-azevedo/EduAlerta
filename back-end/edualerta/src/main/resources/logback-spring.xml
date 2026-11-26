@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!-- Define o caminho da pasta onde os logs serão salvos -->
+    <property name="LOG_DIR" value="./logs" />
+    
+    <!-- Captura a data/hora exata da inicialização para dar nome ao arquivo atual -->
+    <timestamp key="timestamp" datePattern="yyyyMMdd_HHmmss"/>
+
+    <!-- Configuração do Console (Para continuar vendo os logs no terminal) -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Configuração do Arquivo de Log Único por Inicialização -->
+    <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+        <!-- O nome do arquivo conterá a data e hora em que a aplicação subiu -->
+        <file>${LOG_DIR}/log_${timestamp}.log</file>
+        <append>true</append>
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- Aplica as configurações para o sistema -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE" />
+    </root>
+
+</configuration>
+
