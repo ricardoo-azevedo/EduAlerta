@@ -1,44 +1,467 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Relatórios | EduAlerta</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
-    <link href="css/style.css" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Relatórios | EduAlerta</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
+  <link href="css/style.css" rel="stylesheet">
+
+  <style>
+    #relatorios .report-section {
+      border: 1px solid #e5e7eb;
+      border-radius: .75rem;
+      padding: 1.15rem;
+      margin-bottom: 1rem;
+      background: #fff;
+    }
+
+    #relatorios .report-section h3 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      margin-bottom: .9rem;
+      color: #17365d;
+    }
+
+    #relatorios .report-metric {
+      background: #f5f7fa;
+      border-radius: .65rem;
+      padding: .85rem;
+      height: 100%;
+    }
+
+    #relatorios .report-metric strong {
+      display: block;
+      font-size: 1.35rem;
+      color: #17365d;
+    }
+
+    #relatorios .report-muted {
+      color: #687386;
+      font-size: .9rem;
+    }
+
+    #relatorios .report-item {
+      border-left: 3px solid #cbd5e1;
+      padding: .2rem 0 .2rem .85rem;
+      margin: .8rem 0;
+    }
+
+    #relatorios .report-item p:last-child {
+      margin-bottom: 0;
+    }
+
+    #relatorios .report-table {
+      font-size: .88rem;
+    }
+
+    #relatorios .report-empty {
+      color: #6c757d;
+      font-style: italic;
+    }
+
+    @page {
+      size: A4 landscape;
+      margin: 12mm;
+    }
+
+    @media print {
+
+      html,
+      body {
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #fff !important;
+        color: #212529 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      .page-shell {
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      #cabecalho,
+      #navegacao,
+      #formularioRelatorio,
+      #acoesRelatorio,
+      #mensagemRelatorio,
+      .page-heading {
+        display: none !important;
+      }
+
+      #relatorios,
+      #visualizacaoRelatorio {
+        display: block !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      /* Evita cortar cartões e blocos pequenos entre páginas. */
+      #relatorios .report-section {
+        box-shadow: none !important;
+        break-inside: avoid-page;
+        page-break-inside: avoid;
+        margin-bottom: 8mm !important;
+      }
+
+      #relatorios .report-metric,
+      #relatorios .report-item {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+
+      /* Mantém os títulos junto ao conteúdo seguinte. */
+      #relatorios h2,
+      #relatorios h3,
+      #relatorios h4 {
+        break-after: avoid;
+        page-break-after: avoid;
+      }
+
+      /* Evita cabeçalho de tabela isolado no final da página. */
+      #relatorios table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        break-inside: auto;
+        page-break-inside: auto;
+      }
+
+      #relatorios thead {
+        display: table-header-group;
+        break-after: avoid;
+        page-break-after: avoid;
+      }
+
+      #relatorios tr {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+
+      #relatorios th,
+      #relatorios td {
+        padding: 6px !important;
+        vertical-align: middle !important;
+      }
+
+      #relatorios .table-responsive {
+        overflow: visible !important;
+      }
+
+      #relatorios .report-table {
+        font-size: 9pt !important;
+      }
+
+      a {
+        color: inherit !important;
+        text-decoration: none !important;
+      }
+    }
+  </style>
 </head>
+
 <body hidden>
-    <div id="cabecalho"></div>
-    <div id="navegacao"></div>
 
-    <main class="container page-shell">
-        <section id="relatorios">
-            <div class="page-heading">
-                <h2><i class="bi bi-bar-chart-fill me-2"></i>Relatórios</h2>
-                <p>Consulte dados consolidados por aluno e período letivo.</p>
+  <div id="cabecalho"></div>
+  <div id="navegacao"></div>
+
+  <main class="container page-shell">
+
+    <section id="relatorios">
+
+      <div class="page-heading">
+        <h2>
+          <i class="bi bi-file-earmark-bar-graph-fill me-2"></i>
+          Relatório individual
+        </h2>
+
+        <p>
+          Consolide a trajetória escolar, a frequência
+          e as intervenções registradas para um aluno.
+        </p>
+      </div>
+
+      <div id="mensagemRelatorio" aria-live="polite">
+      </div>
+
+      <!-- Seleção do aluno -->
+
+      <div class="card mb-4" id="formularioRelatorio">
+
+        <div class="card-body">
+
+          <h3 class="h5 fw-bold mb-3">
+            Selecionar aluno
+          </h3>
+
+          <div class="row g-3 align-items-end">
+
+            <div class="col-md-8">
+
+              <label for="alunoRelatorio" class="form-label">
+
+                Aluno
+
+              </label>
+
+              <select id="alunoRelatorio" class="form-select">
+
+                <option value="">
+                  Carregando alunos...
+                </option>
+
+              </select>
+
             </div>
 
-            <div class="status-note">
-                <i class="bi bi-plug me-2"></i>
-                Interface preparada para integração. Dados reais dependem dos endpoints da API.
+            <div class="col-md-4 d-grid">
+
+              <button id="gerarRelatorio" class="btn btn-primary" type="button" disabled>
+
+                <i class="bi bi-search me-1"></i>
+                Gerar relatório
+
+              </button>
+
             </div>
 
-            <div class="card">
-                <div class="card-body">
-                    <h3 class="h5 fw-bold mb-3">Relatórios de frequência</h3>
-                    <div class="empty-state">
-                        <i class="bi bi-bar-chart-line fs-2 d-block mb-3"></i>
-                        Relatórios serão alimentados por dados reais da API.
-                    </div>
-                </div>
-            </div>
-        </section>
-    </main>
+          </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-    <script src="js/config.js"></script>
-    <script src="js/auth.js"></script>
-    <script src="js/layout.js"></script>
+          <p class="report-muted mt-3 mb-0">
+            O relatório considera todo o histórico disponível
+            do aluno. Dados de contato privados, documentos
+            e informações de autenticação não são incluídos.
+          </p>
+
+        </div>
+      </div>
+
+      <!-- Ações -->
+
+      <div id="acoesRelatorio" class="d-flex flex-wrap justify-content-between
+                       align-items-center gap-2 mb-3" hidden>
+
+        <div class="report-muted" id="dataGeracao">
+        </div>
+
+        <button id="baixarPdf" class="btn btn-danger" type="button">
+
+          <i class="bi bi-file-earmark-pdf me-1"></i>
+          Imprimir / salvar PDF
+
+        </button>
+
+      </div>
+
+      <!-- Visualização do relatório -->
+
+      <div id="visualizacaoRelatorio" hidden>
+
+        <!-- Identificação -->
+
+        <div class="report-section">
+
+          <div class="d-flex flex-wrap justify-content-between
+                               gap-3 align-items-start">
+
+            <div>
+
+              <div class="text-uppercase report-muted fw-semibold">
+
+                EduAlerta · Relatório individual
+
+              </div>
+
+              <h2 class="h3 fw-bold mt-2 mb-1" id="nomeAlunoRelatorio">
+              </h2>
+
+              <div id="situacaoAlunoRelatorio" class="report-muted">
+              </div>
+
+            </div>
+
+            <div class="text-md-end report-muted">
+
+              <div>
+                Documento de acompanhamento escolar
+              </div>
+
+              <div id="geradoEmRelatorio"></div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- Síntese -->
+
+        <div class="report-section">
+
+          <h3>1. Síntese geral</h3>
+
+          <div class="row g-3" id="metricasRelatorio">
+          </div>
+
+          <p class="report-muted mt-3 mb-0" id="sinteseRelatorio">
+          </p>
+
+        </div>
+
+        <!-- Matrículas -->
+
+        <div class="report-section">
+
+          <h3>2. Histórico de matrículas e turmas</h3>
+
+          <div id="matriculasRelatorio"></div>
+
+          <h4 class="h6 fw-bold mt-4">
+            Mudanças de turma identificadas
+          </h4>
+
+          <div id="transferenciasRelatorio"></div>
+
+        </div>
+
+        <!-- Frequência -->
+
+        <div class="report-section">
+
+          <h3>3. Frequência e fechamentos semanais</h3>
+
+          <div id="frequenciaRelatorio"></div>
+
+        </div>
+
+        <p class="report-muted mb-3">
+
+          Observação: as faltas são armazenadas por fechamento
+          semanal, sem detalhamento individual por dia.
+          Os valores refletem os totais registrados em cada
+          fechamento considerado.
+
+        </p>
+
+        <!-- Responsáveis -->
+
+        <div class="report-section">
+
+          <h3>4. Responsáveis associados</h3>
+
+          <div id="responsaveisRelatorio"></div>
+
+        </div>
+
+        <!-- Notificações -->
+
+        <div class="report-section">
+
+          <h3>5. Comunicação com responsáveis</h3>
+
+          <div id="notificacoesRelatorio"></div>
+
+          <p class="report-muted mt-3 mb-0">
+
+            O status “enviado” indica que o serviço de
+            e-mail registrou o envio como concluído.
+            Não comprova recebimento, leitura ou resposta
+            do destinatário.
+
+            O sistema mantém o estado atual da notificação,
+            não um histórico individual de cada reenvio.
+
+          </p>
+
+        </div>
+
+        <!-- Acompanhamentos -->
+
+        <div class="report-section">
+
+          <h3>6. Intervenções e acompanhamentos</h3>
+
+          <div id="acompanhamentosRelatorio"></div>
+
+        </div>
+
+        <!-- Encaminhamentos -->
+
+        <div class="report-section">
+
+          <h3>7. Encaminhamentos institucionais</h3>
+
+          <div id="encaminhamentosRelatorio"></div>
+
+        </div>
+
+        <!-- Alertas -->
+
+        <div class="report-section">
+
+          <h3>8. Alertas e situação de risco</h3>
+
+          <div id="alertasRelatorio"></div>
+
+        </div>
+
+        <!-- Considerações -->
+
+        <div class="report-section">
+
+          <h3>9. Considerações sobre os registros</h3>
+
+          <p class="mb-2">
+
+            Este documento consolida exclusivamente
+            informações registradas no EduAlerta.
+            A ausência de um registro não comprova
+            que uma ação não tenha ocorrido fora
+            do sistema.
+
+          </p>
+
+          <p class="mb-0">
+
+            As mudanças de turma são identificadas
+            pela sequência de matrículas em turmas
+            diferentes.
+
+            O sistema não registra, atualmente,
+            um motivo específico para cada mudança.
+
+          </p>
+
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Biblioteca externa utilizada pela autenticação -->
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+
+  <!-- Scripts do projeto -->
+
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/layout.js"></script>
+  <script src="js/relatorios.js"></script>
+
 </body>
+
 </html>
