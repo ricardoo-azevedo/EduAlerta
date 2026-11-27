@@ -6,7 +6,6 @@ import edu.uninassau.edualerta.dtos.AcompanhamentoResponseDto;
 import edu.uninassau.edualerta.models.Acompanhamento;
 import edu.uninassau.edualerta.models.Alerta;
 import edu.uninassau.edualerta.models.Perfil;
-import edu.uninassau.edualerta.models.SituacaoAlerta;
 import edu.uninassau.edualerta.models.Usuario;
 import edu.uninassau.edualerta.repositorys.AcompanhamentoRepository;
 import edu.uninassau.edualerta.repositorys.AlertaRepository;
@@ -49,10 +48,6 @@ public class AcompanhamentoServiceImpl
 
     Acompanhamento salvo =
         acompanhamentoRepository.saveAndFlush(acompanhamento);
-
-    alerta.setSituacao(SituacaoAlerta.RESOLVIDO);
-    alerta.setResolvidoManualmente(true);
-    alerta.setAtualizadoEm(agora);
 
     return converterParaDto(salvo);
   }

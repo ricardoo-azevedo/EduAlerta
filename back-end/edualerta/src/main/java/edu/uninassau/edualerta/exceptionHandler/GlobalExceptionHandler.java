@@ -2,6 +2,7 @@ package edu.uninassau.edualerta.exceptionHandler;
 
 import jakarta.persistence.EntityNotFoundException;
 import java.util.stream.Collectors;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -38,5 +39,11 @@ public class GlobalExceptionHandler {
         .collect(Collectors.joining("; "));
 
     return ResponseEntity.badRequest().body(new RestError(400, mensagem));
+  }
+
+  @ExceptionHandler(DataIntegrityViolationException.class)
+  public ResponseEntity<RestError> tratarConflitoDeDados(DataIntegrityViolationException e) {
+    return ResponseEntity.status(HttpStatus.CONFLICT)
+        .body(new RestError(409, "A operação viola uma restrição de integridade dos dados."));
   }
 }

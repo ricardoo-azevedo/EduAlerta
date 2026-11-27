@@ -85,4 +85,40 @@ public class EmailService {
           "Não foi possível enviar o e-mail de acesso", e);
     }
   }
+
+  public void enviarNotificacaoAlerta(String nome, String email, String assunto,
+                                      String mensagemTexto) {
+
+    validarConfiguracao();
+
+    String nomeSeguro = HtmlUtils.htmlEscape(nome);
+    String mensagemSegura =
+        HtmlUtils.htmlEscape(mensagemTexto).replace("\n", "<br>");
+
+    String html =
+        "<h2>Comunicado do EduAlerta</h2>"
+        + "<p>Olá, " + nomeSeguro + ".</p>"
+        + ("<p>Foi registrada uma comunicação referente à frequência " +
+           "escolar:</p>")
+        + "<p>" + mensagemSegura + "</p>"
+        + "<p>Esta mensagem foi enviada automaticamente pelo EduAlerta. "
+        + ("Em caso de dúvidas, entre em contato com a instituição de " +
+           "ensino.</p>");
+
+    try {
+      MimeMessage mensagem = mailSender.createMimeMessage();
+      MimeMessageHelper helper = new MimeMessageHelper(mensagem, true, "UTF-8");
+      helper.setFrom(remetente);
+      helper.setTo(email);
+      helper.setSubject(assunto);
+      helper.setText(mensagemTexto, html);
+      mailSender.send(mensagem);
+    } catch (MessagingException e) {
+      throw new IllegalStateException(
+          "Não foi possível preparar o e-mail de notificação", e);
+    } catch (MailException e) {
+      throw new IllegalStateException(
+          "Não foi possível enviar o e-mail de notificação", e);
+    }
+  }
 }

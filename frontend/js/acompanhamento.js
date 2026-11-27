@@ -545,8 +545,7 @@
             const confirmado = confirm(
                 `Registrar acompanhamento para ` +
                 `${alertaSelecionado.alunoNome}? ` +
-                `A situação do alerta será atualizada ` +
-                `para resolvido.`
+                `O registro não altera a situação do alerta.`
             );
 
             if (!confirmado) return;
@@ -579,7 +578,7 @@
                 if (atualizado) {
                     avisar(
                         "Acompanhamento registrado com sucesso. " +
-                        "O alerta foi atualizado para resolvido.",
+                        "A situação do alerta foi mantida.",
                         true
                     );
                 } else {

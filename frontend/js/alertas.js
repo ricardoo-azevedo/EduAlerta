@@ -132,6 +132,48 @@
         );
     }
 
+    function criarLinkNotificacoes(alerta) {
+        const link = document.createElement("a");
+        link.href = `notificacoes.html?alertaId=${encodeURIComponent(alerta.id)}`;
+        link.className = "btn btn-outline-info btn-sm";
+        link.innerHTML = '<i class="bi bi-envelope me-1"></i>Histórico';
+        return link;
+    }
+
+    function criarLinkEncaminhamentos(alerta) {
+        const link = document.createElement("a");
+        link.href = `encaminhamentos.html?alertaId=${encodeURIComponent(alerta.id)}`;
+        link.className = "btn btn-outline-secondary btn-sm";
+        link.innerHTML = '<i class="bi bi-send-check me-1"></i>Encaminhamentos';
+        return link;
+    }
+
+    async function notificarResponsaveis(alerta, botao) {
+        if (carregando) return;
+        const confirmado = confirm(
+            `Enviar um e-mail aos responsáveis ativos associados a ${alerta.alunoNome}?`
+        );
+        if (!confirmado) return;
+        definirCarregamento(true);
+        avisar("");
+        try {
+            const resultados = await requisicaoAPI(
+                `/alertas/${alerta.id}/notificacoes`,
+                { method: "POST" }
+            );
+            const enviadas = resultados.filter(item => item.status === "ENVIADA").length;
+            const falhas = resultados.length - enviadas;
+            const resumo = `${enviadas} e-mail(s) enviado(s) ou já enviado(s) anteriormente` +
+                (falhas ? `; ${falhas} falha(s). Consulte o histórico de notificações.` : ".");
+            avisar(resumo, falhas === 0);
+        } catch (erro) {
+            avisar(erro.message || "Não foi possível enviar as notificações.");
+        } finally {
+            botao.disabled = false;
+            definirCarregamento(false);
+        }
+    }
+
     function criarLinkAcompanhamento(alerta) {
         const link = document.createElement("a");
 
@@ -287,9 +329,16 @@
             grupoAcoes.className =
                 "d-flex flex-wrap gap-2";
 
-            grupoAcoes.appendChild(
-                criarLinkAcompanhamento(alerta)
-            );
+            grupoAcoes.appendChild(criarLinkAcompanhamento(alerta));
+            grupoAcoes.appendChild(criarLinkEncaminhamentos(alerta));
+            grupoAcoes.appendChild(criarLinkNotificacoes(alerta));
+
+            const botaoNotificar = document.createElement("button");
+            botaoNotificar.type = "button";
+            botaoNotificar.className = "btn btn-outline-success btn-sm";
+            botaoNotificar.innerHTML = '<i class="bi bi-envelope me-1"></i>Notificar';
+            botaoNotificar.addEventListener("click", () => notificarResponsaveis(alerta, botaoNotificar));
+            grupoAcoes.appendChild(botaoNotificar);
 
             if (alerta.situacao === "ATIVO") {
                 const botao = document.createElement("button");

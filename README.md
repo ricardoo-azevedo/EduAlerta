@@ -6,11 +6,11 @@ O EduAlerta é uma aplicação web desenvolvida com o objetivo de auxiliar insti
 
 A plataforma permite organizar os dados escolares, gerenciar alunos, turmas, matrículas e períodos letivos. O backend também permite criar e fechar semanas por turma, registrar aulas realizadas por dia, lançar faltas não justificadas e justificadas por matrícula, consultar a frequência acumulada de uma matrícula e gerar ou atualizar automaticamente alertas por aluno e período letivo quando um fechamento semanal é concluído.
 
-A consulta e a resolução manual de alertas estão disponíveis na API. O registro e a consulta do histórico de acompanhamentos também estão implementados no backend e integrados à tela correspondente do frontend. Notificações e relatórios permanecem em desenvolvimento.
+A consulta e a resolução manual de alertas estão disponíveis na API. O registro e a consulta do histórico de acompanhamentos, o cadastro e a associação de responsáveis, o envio de notificações por e-mail e o gerenciamento de encaminhamentos estão implementados no backend e integrados ao frontend. Relatórios permanecem em desenvolvimento.
 
 O sistema busca utilizar a tecnologia como ferramenta de apoio à gestão escolar e à prevenção da evasão, facilitando a identificação antecipada de situações que exigem atenção e o registro das intervenções realizadas pela instituição.
 
->  **Status: Em desenvolvimento.** O backend possui autenticação, gerenciamento escolar, fechamento semanal, frequência por matrícula, consulta de frequência acumulada, cálculo percentual, geração/atualização automática e resolução manual de alertas, além do cadastro e consulta de acompanhamentos vinculados aos alertas. O frontend possui integração com autenticação, gestão escolar, usuários, fechamento/frequência semanal, consulta de frequência acumulada, painel de indicadores, consulta/gestão de alertas e registro/consulta do histórico de acompanhamentos. Notificações, encaminhamentos e relatórios ainda não possuem implementação funcional.
+>  **Status: Em desenvolvimento.** O backend possui autenticação, gerenciamento escolar, fechamento semanal, frequência por matrícula, consulta de frequência acumulada, cálculo percentual, geração/atualização automática e resolução manual de alertas, cadastro e associação de responsáveis, notificações por e-mail, encaminhamentos e acompanhamentos independentes da resolução do alerta. O frontend integra esses módulos, além do painel de indicadores. Relatórios ainda não possuem implementação funcional.
 
 ---
 
@@ -55,7 +55,7 @@ O desenvolvimento do EduAlerta acontece de forma incremental. Esta seção apres
 - Resolução manual de alertas por meio de endpoint próprio, disponível para os perfis `ADM` e `SECRETARIA`.
 - Cadastro de acompanhamentos vinculados a um alerta e ao usuário autenticado, com tipo, descrição, resultado e data/hora.
 - Consulta do histórico de acompanhamentos por alerta, ordenado do mais recente para o mais antigo.
-- Atualização automática do alerta para `RESOLVIDO` após cada novo acompanhamento.
+- O registro de acompanhamento é independente da resolução manual do alerta.
 
 ### Implementado ou integrado no frontend
 
@@ -80,12 +80,10 @@ O desenvolvimento do EduAlerta acontece de forma incremental. Esta seção apres
 
 ### Ainda não implementado no backend
 
-- Cadastro e associação de responsáveis.
-- Notificações e encaminhamentos.
-- Endpoints de dashboard e relatórios.
+- Endpoints próprios para dashboard e relatórios.
 - Cobertura abrangente de testes automatizados. No código atual, há apenas um teste de contexto (`contextLoads`); as regras de negócio e os endpoints ainda precisam de testes automatizados específicos.
 
-As seções seguintes distinguem as funcionalidades já disponíveis na API daquelas que permanecem apenas previstas na modelagem ou no escopo futuro.
+As seções seguintes distinguem as funcionalidades já disponíveis na API daquelas que permanecem no escopo futuro.
 
 ---
 
@@ -99,15 +97,35 @@ As seções seguintes distinguem as funcionalidades já disponíveis na API daqu
 | Gestão de turmas | Implementada | Cadastro, listagem, consulta por ID, edição e ativação/desativação. |
 | Períodos letivos | Implementada | Cadastro, listagem, consulta por ID, edição e ativação/desativação. |
 | Matrículas | Implementada | Cadastro, listagem, consulta, histórico por aluno, encerramento e transferência. |
-| Responsáveis | Pendente | Cadastro e associação de responsáveis aos alunos. |
+| Responsáveis | Implementada | Cadastro, consulta, edição, status e associação de responsáveis aos alunos. |
 | Fechamento semanal | Implementada | Criação, listagem, consulta, manutenção dos dias letivos e fechamento definitivo de uma semana por turma e período letivo. |
 | Frequência semanal | Implementada | Registro, listagem, edição e remoção de faltas não justificadas e justificadas por matrícula, enquanto o fechamento estiver em rascunho. |
 | Frequência acumulada | Implementada | Consulta do total de faltas não justificadas, aulas realizadas e percentual da matrícula. |
 | Classificação de risco | Implementada | Classificação automática por aluno e período letivo. |
 | Alertas | Implementada | Geração/atualização automática ao fechar semanas, consulta com filtros por aluno, período, nível e situação, além de resolução manual. |
-| Acompanhamentos | Implementada | Cadastro e consulta do histórico de intervenções por alerta, com vínculo ao usuário autenticado e resolução automática do alerta. |
-| Notificações | Pendente | Registro de notificações relacionadas aos alertas. |
-| Encaminhamentos | Opcional | Registro de possíveis encaminhamentos relacionados aos alertas. |
+| Acompanhamentos | Implementada | Cadastro e consulta do histórico de intervenções por alerta, com vínculo ao usuário autenticado. O registro não resolve automaticamente o alerta. |
+| Notificações | Implementada | Envio de e-mails aos responsáveis associados, com histórico de envio e registro de falhas. |
+| Encaminhamentos | Implementada | Registro e atualização da situação de encaminhamentos relacionados aos alertas. |
+
+### Endpoints adicionados para responsáveis, notificações e encaminhamentos
+
+| Método | Endpoint | Finalidade |
+|---|---|---|
+| `POST` | `/responsaveis` | Cadastrar responsável. |
+| `GET` | `/responsaveis` | Listar responsáveis. |
+| `PUT` | `/responsaveis/{id}` | Atualizar dados do responsável. |
+| `PUT` | `/responsaveis/{id}/status?ativo={true\|false}` | Ativar ou desativar responsável. |
+| `GET` | `/responsaveis/alunos/{alunoId}` | Listar responsáveis associados ao aluno. |
+| `POST` | `/responsaveis/alunos/{alunoId}` | Associar responsável ao aluno; o corpo recebe `responsavelId` e `responsavelPrincipal`. |
+| `DELETE` | `/responsaveis/alunos/{alunoId}/{responsavelId}` | Remover associação. |
+| `POST` | `/alertas/{alertaId}/notificacoes` | Enviar e-mail aos responsáveis ativos associados ao aluno do alerta. O envio é idempotente por alerta/responsável: e-mails já enviados não são duplicados. |
+| `GET` | `/alertas/{alertaId}/notificacoes` | Consultar histórico de notificações. |
+| `POST` | `/notificacoes/{id}/reenviar` | Tentar novamente uma notificação que falhou. |
+| `POST` | `/alertas/{alertaId}/encaminhamentos` | Cadastrar encaminhamento. |
+| `GET` | `/alertas/{alertaId}/encaminhamentos` | Listar encaminhamentos do alerta. |
+| `PUT` | `/alertas/{alertaId}/encaminhamentos/{id}/status?status={PENDENTE\|EM_ANDAMENTO\|CONCLUIDO\|CANCELADO}` | Atualizar a situação do encaminhamento. |
+
+O envio de e-mails é iniciado pela secretaria/administrador na tela de alertas. O sistema não dispara mensagens automaticamente a cada atualização semanal, evitando comunicações repetidas sem uma decisão explícita da instituição.
 
 ### Situação das telas no frontend
 
@@ -118,13 +136,16 @@ As seções seguintes distinguem as funcionalidades já disponíveis na API daqu
 | Usuários (`usuarios.html`) | Integrada | Lista usuários; ADM pode cadastrar secretarias, alterar nome e ativar/desativar contas. |
 | Minha conta (`minha-conta.html`) | Integrada | Consulta os dados da conta, permite atualizar o próprio nome e desativar a própria conta. |
 | Alunos (`alunos.html`) | Integrada | CRUD e alteração de status por meio de `/alunos`. |
+| Responsáveis (`responsaveis.html`) | Integrada | Cadastro, edição, ativação/desativação e associação/desassociação com alunos. |
 | Turmas (`turmas.html`) | Integrada | CRUD e alteração de status por meio de `/turmas`. |
 | Matrículas e períodos (`matriculas.html`) | Integrada | Cadastro, consulta, encerramento e transferência de matrículas; CRUD e status de períodos letivos. |
 | Painel (`painel.html`) | Integrada | Consulta alunos, matrículas, fechamentos e alertas; calcula indicadores no frontend e exibe os cinco alertas ativos mais recentes. |
 | Frequência (`frequencias.html`) | Integrada | Gerencia fechamentos semanais, dias/aulas e frequências por matrícula usando os endpoints da API. |
 | Consulta de frequência (`consulta-frequencia.html`) | Integrada | Consulta o histórico de matrículas de um aluno e solicita a frequência acumulada de cada matrícula. |
-| Alertas (`alertas.html`) | Integrada | Consulta alertas pela API, oferece filtros por aluno, período, nível e situação e permite resolver alertas ativos. |
-| Acompanhamentos (`acompanhamento.html`) | Integrada | Permite selecionar um alerta, registrar intervenções e consultar o histórico vinculado ao alerta. |
+| Alertas (`alertas.html`) | Integrada | Consulta alertas, oferece filtros, permite resolução manual, dispara e-mails aos responsáveis associados e direciona aos históricos de notificações e encaminhamentos. |
+| Acompanhamentos (`acompanhamento.html`) | Integrada | Permite selecionar um alerta, registrar intervenções e consultar o histórico vinculado ao alerta, sem resolvê-lo automaticamente. |
+| Notificações (`notificacoes.html`) | Integrada | Consulta o histórico de e-mails e permite tentar novamente os envios com falha. |
+| Encaminhamentos (`encaminhamentos.html`) | Integrada | Registra encaminhamentos e permite consultar e atualizar suas situações. |
 | Relatórios (`relatorios.html`) | Apenas estrutura visual | Não consulta nem consolida dados da API. |
 
 ---
@@ -814,11 +835,7 @@ A consulta `/matriculas/{id}/frequencia-acumulada` possui outro recorte: calcula
 
 ### Endpoints ainda não implementados
 
-Os seguintes módulos não possuem controllers ou endpoints disponíveis no backend atual:
-
-- Responsáveis e associação entre responsáveis e alunos.
-- Notificações e encaminhamentos.
-- Dashboard e relatórios.
+Os endpoints próprios de dashboard e relatórios ainda não estão disponíveis no backend. Os indicadores atuais do painel são calculados no frontend a partir das APIs existentes.
 
 ---
 
@@ -945,6 +962,10 @@ As entidades JPA presentes no backend documentado mapeiam as seguintes tabelas:
 | `app.tb_frequencia_semanal` | `FrequenciaSemanal` | Faltas não justificadas e justificadas por matrícula e fechamento semanal. |
 | `app.tb_alerta` | `Alerta` | Percentual acumulado, nível, situação, indicador de resolução manual, motivo e data de atualização do alerta por aluno e período letivo. |
 | `app.tb_acompanhamento` | `Acompanhamento` | Intervenção vinculada a um alerta e ao usuário que a registrou, com data/hora, tipo, descrição e resultado. |
+| `app.tb_responsavel` | `Responsavel` | Dados de contato do responsável, incluindo nome, e-mail, telefone, parentesco e situação. |
+| `app.tb_aluno_responsavel` | `AlunoResponsavel` | Associação entre aluno e responsável, com indicação de responsável principal. |
+| `app.tb_notificacao` | `Notificacao` | Histórico do e-mail associado ao alerta e ao responsável, incluindo status, erro e datas de criação/envio. |
+| `app.tb_encaminhamento` | `Encaminhamento` | Registro de serviço de destino, finalidade, observação, status e data do encaminhamento. |
 
 **Observação sobre schemas:** a entidade `Usuario` está mapeada sem declaração explícita de schema na anotação `@Table`. As demais entidades acima declaram o schema `app` no código apresentado. A localização efetiva de `tb_usuario` também depende das propriedades de conexão e configuração JPA.
 
@@ -1152,15 +1173,18 @@ erDiagram
     RESPONSAVEL {
         bigint id PK
         string nome
-        string telefone
         string email
+        string telefone
+        string parentesco
+        boolean ativo
     }
 
     ALUNO_RESPONSAVEL {
-        bigint aluno_id PK, FK
-        bigint responsavel_id PK, FK
-        string parentesco
-        boolean principal
+        bigint id PK
+        bigint aluno_id FK
+        bigint responsavel_id FK
+        boolean responsavel_principal
+        datetime criado_em
     }
 
     ALERTA {
@@ -1189,20 +1213,24 @@ erDiagram
         bigint id PK
         bigint alerta_id FK
         bigint responsavel_id FK
-        string canal
+        string email_destino
+        string assunto
+        string mensagem
         string status
-        datetime enviada_em
-        datetime entregue_em
+        string erro_envio
+        datetime criado_em
+        datetime enviado_em
     }
 
     ENCAMINHAMENTO {
         bigint id PK
         bigint alerta_id FK
         string servico_destino
-        string programa
-        string status
-        datetime encaminhado_em
+        string finalidade
         string observacao
+        string status
+        date data_encaminhamento
+        datetime criado_em
     }
 
     PERIODO_LETIVO ||--o{ FECHAMENTO_SEMANAL : organiza
@@ -1231,16 +1259,16 @@ erDiagram
     ALERTA ||--o{ ENCAMINHAMENTO : pode_gerar
 ```
 
-### Entidades ainda previstas, sem implementação no backend
+### Entidades implementadas
 
 | Entidade | Responsabilidade |
 |---|---|
-| `RESPONSAVEL` | Armazena os dados dos responsáveis pelos alunos. |
-| `ALUNO_RESPONSAVEL` | Relaciona alunos e responsáveis. |
-| `NOTIFICACAO` | Mantém os registros de notificações relacionadas aos alertas. |
-| `ENCAMINHAMENTO` | Representa possíveis encaminhamentos relacionados aos alertas. |
+| `RESPONSAVEL` | Armazena nome, e-mail, telefone, parentesco e situação do responsável. |
+| `ALUNO_RESPONSAVEL` | Relaciona alunos e responsáveis, identificando opcionalmente o responsável principal. |
+| `NOTIFICACAO` | Mantém o histórico de e-mails relacionados aos alertas, incluindo falhas e tentativas de reenvio. |
+| `ENCAMINHAMENTO` | Registra o serviço de destino, finalidade, observação, data e situação do encaminhamento. |
 
-A entidade `ACOMPANHAMENTO` está implementada e mantém relacionamentos muitos-para-um com `ALERTA` e `USUARIO`. A resolução manual de um alerta continua sendo uma operação independente e não cria automaticamente um acompanhamento.
+A entidade `ACOMPANHAMENTO` mantém relacionamentos muitos-para-um com `ALERTA` e `USUARIO`. A resolução manual de um alerta continua sendo uma operação independente e não cria automaticamente um acompanhamento. O cadastro de acompanhamento também não resolve o alerta automaticamente.
 
 ### Decisões importantes da modelagem
 
@@ -1365,7 +1393,7 @@ A chave utilizada no frontend deve ser a chave pública do Supabase. A chave adm
 
 O backend utiliza `spring.jpa.hibernate.ddl-auto=validate`. Portanto, o Hibernate **não cria nem atualiza as tabelas**: o schema e as tabelas precisam existir antes de iniciar a aplicação.
 
-No SQL Editor do Supabase, execute o script abaixo para criar a modelagem inicial correspondente às entidades atualmente implementadas no backend. O script contempla as tabelas funcionais existentes, incluindo `tb_acompanhamento`; responsáveis, notificações e encaminhamentos continuam fora desta primeira estrutura.
+No SQL Editor do Supabase, execute o script abaixo para criar a modelagem inicial correspondente às entidades atualmente implementadas no backend. O script contempla as tabelas funcionais existentes, incluindo `tb_acompanhamento`; responsáveis, notificações e encaminhamentos são criados pela migração incremental disponível em `back-end/edualerta/migrations/2026-11-26-responsaveis-notificacoes-encaminhamentos.sql`.
 
 ```sql
 CREATE SCHEMA IF NOT EXISTS app;
@@ -1671,11 +1699,9 @@ As imagens construídas não são removidas, e os dados armazenados no Supabase 
 
 Com base no estado atual do desenvolvimento e no escopo funcional, as próximas etapas incluem:
 
-1. Implementar o cadastro e a associação de responsáveis, caso permaneçam no escopo da entrega.
-2. Desenvolver notificações e, se priorizado, encaminhamentos.
-3. Implementar os endpoints e a integração de relatórios com dados reais.
-4. Ampliar a cobertura automatizada das regras de negócio e dos endpoints, incluindo acompanhamentos.
-5. Revisar a configuração de ambiente do frontend para separar a URL local da API da URL utilizada em publicação.
+1. Implementar os endpoints e a integração de relatórios com dados reais.
+2. Ampliar a cobertura automatizada das regras de negócio e dos endpoints, incluindo responsáveis, notificações, encaminhamentos e acompanhamentos.
+3. Revisar a configuração de ambiente do frontend para separar a URL local da API da URL utilizada em publicação.
 
 ### Funcionalidades fora do escopo inicial
 
@@ -1686,7 +1712,7 @@ Com base no estado atual do desenvolvimento e no escopo funcional, as próximas 
 - Envio automático de mensagens por WhatsApp.
 - Aplicativo mobile nativo.
 
-A entidade `ENCAMINHAMENTO` permanece prevista na modelagem como funcionalidade opcional, sujeita à disponibilidade de tempo e à priorização da entrega.
+A gestão de encaminhamentos está implementada no backend e integrada à tela correspondente do frontend.
 
 ---
 
